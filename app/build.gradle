@@ -11,7 +11,8 @@ android {
 
     defaultConfig {
         applicationId "com.picpay.desafio.android"
-        minSdk 21
+        minSdk 24
+        //targetSdk 34
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -48,6 +49,8 @@ dependencies {
 
     // Picasso (se precisar)
     implementation 'com.squareup.picasso:picasso:2.8'
+    // CircleImageView
+    implementation 'de.hdodenhof:circleimageview:3.1.0'
 
 //    // Compose (BOM cuida das versões)
 //    def composeBom = platform("androidx.compose:compose-bom:2024.12.00")
