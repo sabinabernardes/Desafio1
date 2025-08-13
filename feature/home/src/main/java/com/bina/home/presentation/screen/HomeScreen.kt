@@ -94,7 +94,7 @@ private fun ErrorSection(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(ColorPrimary),
+            .background(ColorBackground),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -116,8 +116,8 @@ private fun UsersSection(
         style = Typography.displayLarge,
         modifier = Modifier
             .padding(
-                top = Dimens.spacing32,
-                bottom = Dimens.spacing16,
+                top = Dimens.spacing40,
+                bottom = Dimens.spacing32,
                 start = Dimens.spacing16,
                 end = Dimens.spacing16
             )
@@ -127,7 +127,7 @@ private fun UsersSection(
         verticalArrangement = Arrangement.spacedBy(Dimens.spacing2),
         modifier = Modifier
             .fillMaxSize()
-            .background(ColorBackground)
+            .background(ColorPrimary)
     ) {
         items(
             items = users,
