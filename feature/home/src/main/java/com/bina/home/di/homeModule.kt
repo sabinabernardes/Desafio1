@@ -11,6 +11,9 @@ import com.bina.home.domain.repository.UsersRepository
 import com.bina.home.domain.usecase.GetUsersUseCase
 import com.bina.home.presentation.viewmodel.HomeViewModel
 import com.bina.home.utils.RetrofitService
+import org.koin.android.ext.koin.androidContext
+import org.koin.androidx.viewmodel.dsl.viewModel
+import org.koin.dsl.module
 
 val homeModule = module {
     single { RetrofitService.service }
