@@ -36,9 +36,6 @@ android {
     buildFeatures {
         compose = true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.14"
-    }
 }
 
 dependencies {
@@ -47,13 +44,15 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
-    implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.coil.compose)
-    implementation(libs.koin.android)
-    implementation(libs.koin.androidx.compose)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.navigation.runtime.ktx)
+    implementation(platform("io.insert-koin:koin-bom:3.5.3"))
+    implementation("io.insert-koin:koin-android")
+    implementation("io.insert-koin:koin-androidx-compose")
+    implementation(libs.androidx.material3)
     kapt(libs.androidx.room.compiler)
     testImplementation(libs.junit)
     implementation(libs.retrofit2)
