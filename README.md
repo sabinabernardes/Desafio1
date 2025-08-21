@@ -12,7 +12,7 @@
 
 ```bash
 # 1) Clonar
-git clone https://github.com/sabinabernardes/Desafio.git
+git clone https://github.com/sabinabernardes/Desafio1.git
 cd Desafio
 
 # 2) Build rápido
@@ -51,7 +51,6 @@ cd Desafio
 | Assíncrono | Coroutines + Flow |
 | Network | Retrofit |
 | Cache | Room |
-| Qualidade | Detekt, Ktlint |
 | Testes | JUnit5, MockK, Compose UI Testing |
 
 ---
