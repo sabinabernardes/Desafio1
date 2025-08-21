@@ -133,59 +133,6 @@ sealed class HomeUiState {
 2. Ativar **modo avião** e reabrir o app: lista continua disponível (cache local).  
 3. Desativar modo avião: dados são atualizados quando a rede volta.
 
-## Glosário de Branches
-
-<details>
-<summary>Ver branches</summary>
-
-> **Por quê?**  
-> Este glossário serve como _guarda-chuva_ de tarefas: cada branch tem nome padronizado (`<área>/<nº>-<slug-descritivo>`), facilitando a discussão nos PRs, a ordem de merge e a leitura do meu raciocínio de construção.
-
-## 📂 Infra
-
-| Nº  | Branch | Descrição rápida |
-|----:|--------|------------------|
-| 001 | `infra/001-project-setup` | Criação do projeto Android, Gradle raiz, README, `.gitignore`. |
-| 002 | `infra/002-github-actions` | Workflow CI: `assembleDebug`, |
-| 003 | `infra/003-pr-templates` | Templates de Pull Request e Issue na pasta `.github/`. |
-
----
-
-## 🧱 Core
-
-| Nº  | Branch | Descrição rápida |
-|----:|--------|------------------|
-| 001 | `core/001-designsystem-foundation` | **core/designsystem** – modulo. |
-| 001 | `core/001-designsystem-foundation_pt2` | **core/designsystem** – cores, tipografia, espaçamentos, `Theme.kt`, previews. |
-| 002 | `core/002-designsystem-components` | Botões, textos, cards, estados de loading/erro, docs KDoc + stories no Playground. |
-| 003 | `core/003-navigation` | **core/navigation** – Prepara para a navegação do app |
-
----
-
-## ✨ Feature: Home
-
-| Nº  | Branch | Descrição rápida |
-|----:|--------|------------------|
-| 001 | `feature/001-model-dto-mapper` | Criação dos modelos de domínio, DTOs da API e mapeadores entre eles. |
-| 004 | `feature/004-usecase` | Camada opcional de UseCase isolando regras de negócio da UI. |
-| 005 | `feature/005-home-viewmodel` | ViewModel e contratos de UI (State + Event), gerenciamento com StateFlow. |
-| 006 | `feature/006-adjusting-internal` | Ajusta as classes internal do modulo home pra nao dar acesso a outros modulos . |
-| 007 | `feature/007-adjusting-local-data-source` | Ajusta o controle do local data source no projeto  . |
-| 008 | `feature/008-adjusting-xp-screen` | Ajusta o a experiência da home . |
-
----
-
-### 🗝️ Padrão de nomenclatura
-<área>/<número-sequencial>-<slug-kebab-case>
-
-* **área** = `infra`, `core`, `feature`, `app`, `docs`  
-* **número** = ordem de merge (três dígitos para manter ordenação lexicográfica)  
-* **slug** = resumo claro da tarefa/objetivo  
-
-Esse esquema garante histórico linear, PRs focados e fácil rastreabilidade de discussões.
-
-</details>
-
 ---
 
 ## Testes
