@@ -1,25 +1,23 @@
 package com.bina.home.data.repository
 
-import com.bina.home.data.database.UserDao
 import com.bina.home.data.localdatasource.UsersLocalDataSource
 import com.bina.home.data.remotedatasource.UsersRemoteDataSource
 import com.bina.home.data.mapper.toDomain
 import com.bina.home.data.model.UserDto
-import com.bina.home.data.repository.UsersRepositoryImpl
 import com.bina.home.domain.model.User
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
+import app.cash.turbine.test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class UsersRepositoryImplTest {
-    private lateinit var userDao: UserDao
     private lateinit var localDataSource: UsersLocalDataSource
     private lateinit var remoteDataSource: UsersRemoteDataSource
     private lateinit var repository: UsersRepositoryImpl
@@ -37,10 +35,12 @@ class UsersRepositoryImplTest {
         val cachedUsers = listOf(UserDto("img", "name", "1", "username"))
         coEvery { localDataSource.getUsers() } returns kotlinx.coroutines.flow.flow { emit(cachedUsers) }
         coEvery { remoteDataSource.getUsers() } returns kotlinx.coroutines.flow.flow { emit(emptyList()) }
-        // when
-        val result = repository.getUsers().first()
-        // then
-        assertEquals(cachedUsers.map { it.toDomain() }, result)
+        // when / then
+        repository.getUsers().test {
+            val item = awaitItem()
+            assertEquals(cachedUsers.map { it.toDomain() }, item)
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test
@@ -48,10 +48,12 @@ class UsersRepositoryImplTest {
         // given
         coEvery { localDataSource.getUsers() } returns kotlinx.coroutines.flow.flow { emit(emptyList()) }
         coEvery { remoteDataSource.getUsers() } returns kotlinx.coroutines.flow.flow { throw Exception("Network error") }
-        // when
-        val result = repository.getUsers().first()
-        // then
-        assertEquals(emptyList<User>(), result)
+        // when / then
+        repository.getUsers().test {
+            val item = awaitItem()
+            assertEquals(emptyList<User>(), item)
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test
@@ -60,10 +62,12 @@ class UsersRepositoryImplTest {
         val cachedUsers = listOf(UserDto("img", "CacheName", "3", "cacheuser"))
         coEvery { localDataSource.getUsers() } returns kotlinx.coroutines.flow.flow { emit(cachedUsers) }
         coEvery { remoteDataSource.getUsers() } returns kotlinx.coroutines.flow.flow { throw Exception("Network error") }
-        // when
-        val result = repository.getUsers().first()
-        // then
-        assertEquals(cachedUsers.map { it.toDomain() }, result)
+        // when / then
+        repository.getUsers().test {
+            val item = awaitItem()
+            assertEquals(cachedUsers.map { it.toDomain() }, item)
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test
@@ -71,13 +75,21 @@ class UsersRepositoryImplTest {
         // given
         val cachedUsers = emptyList<UserDto>()
         val remoteUsers = listOf(UserDto("img2", "Name2", "2", "username2"))
-        coEvery { localDataSource.getUsers() } returns kotlinx.coroutines.flow.flow { emit(cachedUsers) }
+        coEvery { localDataSource.getUsers() } returns kotlinx.coroutines.flow.flow {
+            emit(cachedUsers)
+            delay(100)
+            emit(remoteUsers)
+        }
         coEvery { remoteDataSource.getUsers() } returns kotlinx.coroutines.flow.flow { emit(remoteUsers) }
         coEvery { localDataSource.insertUsers(remoteUsers) } returns Unit
-        // when
-        val result = repository.getUsers().first()
-        // then
-        assertEquals(remoteUsers.map { it.toDomain() }, result)
+
+        // when / then:
+        repository.getUsers().test {
+            val first = awaitItem()
+            val second = awaitItem()
+            assertEquals(remoteUsers.map { it.toDomain() }, second)
+            cancelAndIgnoreRemainingEvents()
+        }
         coVerify { localDataSource.insertUsers(remoteUsers) }
     }
 }
