@@ -35,11 +35,10 @@ cd Desafio
 5. [Fluxo de Dados](#fluxo-de-dados)
 6. [Política de Cache](#política-de-cache)
 7. [Como Testar](#como-testar)
-8. [Glosário de Branches](#glossário-de-branches)
-9. [Testes](#testes)
-10. [Trade-offs e Decisões Técnicas](#trade-offs-e-decisões-técnicas)
-11. [Coisas legais pra ver aqui](#coisas-legais-pra-ver-aqui)
-12. [Próximos Passos](#próximos-passos)
+8. [Testes](#testes)
+9. [Trade-offs e Decisões Técnicas](#trade-offs-e-decisões-técnicas)
+10. [Coisas legais pra ver aqui](#coisas-legais-pra-ver-aqui)
+11. [Próximos Passos](#próximos-passos)
 
 ---
 
@@ -114,7 +113,7 @@ flowchart TD
 ```kotlin
 sealed class HomeUiState {
     object Loading : HomeUiState()
-    data class Success(val users: List<UserDomain>) : HomeUiState()
+    data class Success(val users: List<UserUi>) : HomeUiState()
     data class Error(val message: String) : HomeUiState()
 }
 ```
@@ -141,6 +140,20 @@ sealed class HomeUiState {
 | Unit | JUnit, MockK, Turbine | VM emite Loading→Success; Repo acessa cache e API |
 | Instrumentado | Room in-memory |
 | UI Compose | Compose Test | Estados loading/error/success e ações |
+
+---
+
+## 📱 Casos de Uso
+
+Mapeamento dos cenários principais implementados:
+
+| UC | Cenário | Status | Como Testar |
+|----|---------|--------|-------------|
+| UC-001 | Primeira Instalação + Shimmer | ✅ | Abrir app pela primeira vez |
+| UC-002 | App com Cache Local | ✅ | Rodar app, modo avião, reabrir |
+| UC-003 | Erro sem Cache + Retry | ✅ | Desconectar rede, clicar "Tentar Novamente" |
+| UC-004 | Pull to Refresh | ✅ | Deslizar para cima na tela |
+| UC-005 | Lista Vazia | ✅ | Simular resposta vazia da API |
 
 ---
 
@@ -199,7 +212,30 @@ Aqui estão os destaques do repositório, com links diretos para as partes mais 
 ---
 
 ## Próximos Passos
-- Mapeamento de erros avançado (4xx/5xx)  
-- Snapshot tests (Paparazzi)  
-- Feature flags  
-- E2E tests  
+
+### 🔄 Curto Prazo 
+- [ ] Implementar testes E2E com UI Automator
+- [ ] GitHub Actions CI/CD com relatórios de cobertura
+- [ ] Mapeamento avançado de erros HTTP (4xx/5xx)
+
+### 📈 Médio Prazo 
+- [ ] Feature flags para rollout gradual
+- [ ] Performance profiling e otimização
+- [ ] Deep linking e navegação avançada
+
+### 🚀 Longo Prazo
+- [ ] Analytics e crash reporting (Firebase)
+- [ ] Documentação de API com Swagger
+- [ ] Suporte a múltiplas localidades (i18n)
+
+---
+
+## 👤 Autor
+
+**Sabina Ricardo** — [GitHub](https://github.com/sabinabernardes)
+
+## 📝 Licença
+
+MIT License
+
+---
