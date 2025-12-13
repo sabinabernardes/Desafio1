@@ -22,16 +22,20 @@ class UsersRepositoryImplTest {
 
     private val local: UsersLocalDataSource = mockk(relaxed = true)
     private val remote: UsersRemoteDataSource = mockk(relaxed = true)
-    private lateinit var usersRepositoryImpl: UsersRepositoryImpl
+    private val errorMapper: ErrorMapper = mockk(relaxed = true)
+    private lateinit var repository: UsersRepositoryImpl
 
-    @Before fun setup() { usersRepositoryImpl = UsersRepositoryImpl(local, remote) }
+    @Before
+    fun setup() {
+        repository = UsersRepositoryImpl(local, remote, errorMapper)
+    }
 
     @Test
     fun `observeUsers should map local dto to domain`() = runTest {
         val dtos = listOf(UserDto("img", "name", "1", "username"))
         every { local.getUsers() } returns flow { emit(dtos) }
 
-        usersRepositoryImpl.observeUsers().test {
+        repository.observeUsers().test {
             assertEquals(dtos.map { it.toDomain() }, awaitItem())
             cancelAndConsumeRemainingEvents()
         }
@@ -42,7 +46,7 @@ class UsersRepositoryImplTest {
         val remoteUsers = listOf(UserDto("img2", "Name2", "2", "username2"))
         every { remote.getUsers() } returns flow { emit(remoteUsers) }
 
-        usersRepositoryImpl.refreshUsers()
+        repository.refreshUsers()
 
         coVerify { local.insertUsers(remoteUsers) }
     }
@@ -50,9 +54,9 @@ class UsersRepositoryImplTest {
     @Test
     fun `refreshUsers throws when remote fails and does not insert`() = runTest {
         every { remote.getUsers() } returns flow<List<UserDto>> { throw Exception("Network error") }
+        every { errorMapper.mapErrorToUserError(any()) } returns com.bina.home.utils.UserError.Unknown
 
-        val ex = assertFailsWith<Exception> { usersRepositoryImpl.refreshUsers() }
-        assertEquals("Network error", ex.message)
+        val ex = assertFailsWith<Exception> { repository.refreshUsers() }
 
         coVerify(exactly = 0) { local.insertUsers(any()) }
     }
@@ -62,7 +66,7 @@ class UsersRepositoryImplTest {
         val emptyDtos = emptyList<UserDto>()
         every { local.getUsers() } returns flow { emit(emptyDtos) }
 
-        usersRepositoryImpl.observeUsers().test {
+        repository.observeUsers().test {
             assertEquals(emptyList<User>(), awaitItem())
             cancelAndConsumeRemainingEvents()
         }
@@ -73,8 +77,10 @@ class UsersRepositoryImplTest {
         val emptyRemoteUsers = emptyList<UserDto>()
         every { remote.getUsers() } returns flow { emit(emptyRemoteUsers) }
 
-        usersRepositoryImpl.refreshUsers()
+        repository.refreshUsers()
 
         coVerify { local.insertUsers(emptyRemoteUsers) }
     }
 }
+
+

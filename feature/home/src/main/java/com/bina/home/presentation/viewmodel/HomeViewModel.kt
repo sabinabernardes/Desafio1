@@ -11,7 +11,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -23,11 +24,29 @@ internal class HomeViewModel(
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
+    private val _initialRefreshDone = MutableStateFlow(false)
+
     val uiState: StateFlow<HomeUiState> =
-        observeUsersUseCase()
-            .map { users ->
-                HomeUiState.Success(users.map { it.toUi() }) as HomeUiState
+        combine(
+            observeUsersUseCase(),
+            _isRefreshing,
+            _initialRefreshDone
+        ) { users, refreshing, initialDone ->
+
+            val userUiList = users.map { it.toUi() }
+
+            when {
+                userUiList.isEmpty() && (!initialDone || refreshing) ->
+                    HomeUiState.Loading
+
+                userUiList.isEmpty() ->
+                    HomeUiState.Empty
+
+                else ->
+                    HomeUiState.Success(userUiList)
             }
+        }
+            .distinctUntilChanged()
             .catch { e ->
                 emit(HomeUiState.Error(e.message ?: "Erro desconhecido"))
             }
@@ -49,11 +68,12 @@ internal class HomeViewModel(
             try {
                 refreshUsersUseCase()
             } catch (e: Exception) {
-                Log.e("ErrorHomeViewModel", "Erro ao atualizar contatos", e)
+                // Offline-first
+                Log.e("HomeViewModel", "Erro ao atualizar contatos", e)
             } finally {
                 _isRefreshing.value = false
+                _initialRefreshDone.value = true
             }
         }
     }
 }
-

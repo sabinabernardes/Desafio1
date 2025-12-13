@@ -8,6 +8,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
@@ -96,33 +97,44 @@ class HomeViewModelTest {
         val vm = HomeViewModel(observeUseCase, refreshUseCase)
         advanceUntilIdle()
 
-        // when/then
+        // when/then - Testa que isRefreshing muda: false → true → false
         vm.isRefreshing.test {
-            assertEquals(false, awaitItem())
-            vm.refresh()
-            assertEquals(true, awaitItem())
-            advanceUntilIdle()
-            assertEquals(false, awaitItem())
+            assertEquals(false, awaitItem())  // estado inicial
+
+            vm.refresh()  // inicia refresh
+
+            assertEquals(true, awaitItem())   // CAPTURA estado durante refresh (por causa do delay)
+
+            advanceUntilIdle()  // aguarda delay(100) terminar
+
+            assertEquals(false, awaitItem())  // estado após refresh terminar
+
             cancelAndConsumeRemainingEvents()
         }
     }
 
     @Test
-    fun `refresh prevents multiple simultaneous calls`() = runTest {
+    fun `uiState emits Loading then Empty when list is empty`() = runTest {
         // given
         every { observeUseCase() } returns flowOf(emptyList())
-        coEvery { refreshUseCase() } returns Unit
+
+        val gate = CompletableDeferred<Unit>()
+        coEvery { refreshUseCase() } coAnswers { gate.await() } // segura o refresh
 
         val vm = HomeViewModel(observeUseCase, refreshUseCase)
-        advanceUntilIdle()
 
-        // when
-        vm.refresh()
-        vm.refresh() // should be ignored due to debounce
+        vm.uiState.test {
+            // estado inicial do StateFlow
+            assertEquals(HomeUiState.Loading, awaitItem())
 
-        advanceUntilIdle()
+            // libera o refresh terminar
+            gate.complete(Unit)
+            advanceUntilIdle()
 
-        // then
-        coVerify(exactly = 2) { refreshUseCase() }
+            // agora, como tá vazio e já tentou, vira Empty
+            assertEquals(HomeUiState.Empty, awaitItem())
+
+            cancelAndConsumeRemainingEvents()
+        }
     }
 }

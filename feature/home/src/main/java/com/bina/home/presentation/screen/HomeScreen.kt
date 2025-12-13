@@ -93,18 +93,16 @@ fun HomeScreenContent(
         ) {
             when (uiState) {
                 is HomeUiState.Loading -> LoadingSection()
+
+                is HomeUiState.Empty -> EmptySection(onRefresh = onRetry)
+
+                is HomeUiState.Success -> UsersSection(users = uiState.users)
+
                 is HomeUiState.Error -> ErrorSection(
                     message = uiState.message,
                     onRetry = onRetry,
                     isRefreshing = isRefreshing
                 )
-                is HomeUiState.Success -> {
-                    if (uiState.users.isNotEmpty()) {
-                        UsersSection(users = uiState.users)
-                    } else {
-                        EmptySection(onRefresh = onRetry)
-                    }
-                }
             }
         }
 
@@ -280,12 +278,13 @@ fun HomeScreenLoadingPreview() {
 fun HomeScreenEmptyPreview() {
     PicPayTheme {
         HomeScreenContent(
-            uiState = HomeUiState.Success(emptyList()),
+            uiState = HomeUiState.Empty,
             isRefreshing = false,
             onRetry = {}
         )
     }
 }
+
 
 @Preview(showBackground = true)
 @Composable
