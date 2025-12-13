@@ -73,6 +73,12 @@ fun HomeScreenContent(
 ) {
     val pullRefreshState = rememberPullRefreshState(isRefreshing, { onRetry() })
 
+    val pullRefreshDescription = if (isRefreshing) {
+        stringResource(id = R.string.home_pull_refresh_loading)
+    } else {
+        stringResource(id = R.string.home_pull_refresh_idle)
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -108,11 +114,7 @@ fun HomeScreenContent(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .semantics {
-                    contentDescription = if (isRefreshing) {
-                        "Atualizando contatos"
-                    } else {
-                        "Puxe para atualizar contatos"
-                    }
+                    contentDescription = pullRefreshDescription
                 },
             backgroundColor = ColorPrimary,
             contentColor = ColorBackground
