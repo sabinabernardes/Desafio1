@@ -5,13 +5,15 @@ import com.bina.home.data.mapper.toDto
 import com.bina.home.data.mapper.toEntity
 import com.bina.home.data.model.UserDto
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 
-internal class UsersLocalDataSourceImpl(private val userDao: UserDao) : UsersLocalDataSource {
-    override suspend fun getUsers(): Flow<List<UserDto>> = flow {
-        val entities = userDao.getAllUsers()
-        emit(entities.map { it.toDto() })
-    }
+internal class UsersLocalDataSourceImpl(
+    private val userDao: UserDao
+) : UsersLocalDataSource {
+
+    override fun getUsers(): Flow<List<UserDto>> =
+        userDao.observeAllUsers()
+            .map { list -> list.map { it.toDto() } }
 
     override suspend fun insertUsers(users: List<UserDto>) {
         userDao.insertUsers(users.map { it.toEntity() })
@@ -21,4 +23,5 @@ internal class UsersLocalDataSourceImpl(private val userDao: UserDao) : UsersLoc
         userDao.clearUsers()
     }
 }
+
 

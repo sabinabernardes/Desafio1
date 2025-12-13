@@ -8,7 +8,8 @@ import com.bina.home.data.remotedatasource.UsersRemoteDataSource
 import com.bina.home.data.remotedatasource.UsersRemoteDataSourceImpl
 import com.bina.home.data.repository.UsersRepositoryImpl
 import com.bina.home.domain.repository.UsersRepository
-import com.bina.home.domain.usecase.GetUsersUseCase
+import com.bina.home.domain.usecase.ObserveUsersUseCase
+import com.bina.home.domain.usecase.RefreshUsersUseCase
 import com.bina.home.presentation.viewmodel.HomeViewModel
 import com.bina.home.utils.RetrofitService
 import org.koin.android.ext.koin.androidContext
@@ -31,8 +32,9 @@ val homeModule = module {
     single<UsersRepository> { UsersRepositoryImpl(get(), get()) }
 
     // UseCases
-    factory { GetUsersUseCase(get()) }
+    factory { ObserveUsersUseCase(get()) }
+    factory { RefreshUsersUseCase(get()) }
 
     // ViewModel
-    viewModel { HomeViewModel(get()) }
+    viewModel { HomeViewModel(get(), get()) }
 }

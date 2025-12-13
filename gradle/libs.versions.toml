@@ -33,6 +33,11 @@ androidxRoomRuntime = "androidx.room:room-runtime:2.6.1"
 androidxRoomCompiler = "androidx.room:room-compiler:2.6.1"
 androidxRoomKtx = "androidx.room:room-ktx:2.6.1"
 navigationRuntimeKtx = "2.9.3"
+koinBom = "3.5.3"
+mockk = "1.13.10"
+coroutinesTest = "1.8.0"
+turbine = "0.12.3"
+coreKtxVersion = "1.7.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -54,8 +59,8 @@ androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-man
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
-koin-android = { module = "org.koin:koin-android", version.ref = "koinAndroid" }
-koin-androidx-compose = { module = "org.koin:koin-androidx-compose", version.ref = "koinAndroidxCompose" }
+koin-android = { module = "io.insert-koin:koin-android", version.ref = "koinAndroid" }
+koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose", version.ref = "koinAndroidxCompose" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-ui-graphics-android = { group = "androidx.compose.ui", name = "ui-graphics-android", version.ref = "uiGraphicsAndroid" }
 androidx-ui-text-android = { group = "androidx.compose.ui", name = "ui-text-android", version.ref = "uiTextAndroid" }
@@ -72,6 +77,11 @@ androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomVers
 retrofit2 = { module = "com.squareup.retrofit2:retrofit", version = "2.9.0" }
 retrofit2-converter-gson = { module = "com.squareup.retrofit2:converter-gson", version = "2.9.0" }
 androidx-navigation-runtime-ktx = { group = "androidx.navigation", name = "navigation-runtime-ktx", version.ref = "navigationRuntimeKtx" }
+koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koinBom" }
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutinesTest" }
+turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
+core-ktx = { group = "androidx.test", name = "core-ktx", version.ref = "coreKtxVersion" }
 
 
 [plugins]

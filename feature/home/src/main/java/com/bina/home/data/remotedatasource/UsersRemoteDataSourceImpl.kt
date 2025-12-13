@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 
 internal class UsersRemoteDataSourceImpl(private val service: PicPayService) : UsersRemoteDataSource {
-    override suspend fun getUsers(): Flow<List<UserDto>> {
+    override fun getUsers(): Flow<List<UserDto>> {
         return flow {
             emit(service.getUsers())
         }.catch {
