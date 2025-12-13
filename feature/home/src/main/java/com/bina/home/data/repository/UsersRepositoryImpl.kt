@@ -6,6 +6,7 @@ import com.bina.home.data.remotedatasource.UsersRemoteDataSource
 import com.bina.home.domain.model.User
 import com.bina.home.domain.repository.UsersRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
 internal class UsersRepositoryImpl(
@@ -13,7 +14,9 @@ internal class UsersRepositoryImpl(
     private val remoteDataSource: UsersRemoteDataSource
 ) : UsersRepository {
     override fun observeUsers(): Flow<List<User>> =
-        localDataSource.getUsers().map { it.map { dto -> dto.toDomain() } }
+        localDataSource.getUsers()
+            .distinctUntilChanged()
+            .map { it.map { dto -> dto.toDomain() } }
 
     override suspend fun refreshUsers() {
         remoteDataSource.getUsers().collect { apiList ->

@@ -54,6 +54,7 @@ dependencies {
     implementation(libs.koin.androidx.compose)
     implementation(libs.androidx.material3)
     implementation(libs.core.ktx)
+    implementation("androidx.compose.material:material:1.10.0")
     kapt(libs.androidx.room.compiler)
     testImplementation(libs.junit)
     implementation(libs.retrofit2)

@@ -14,9 +14,9 @@ fun AppNavigation() {
         navController = navController,
         startDestination = "home"
     ) {
-        composable("home") {
-            HomeRoute(navController)
-        }
+    composable("home") {
+        HomeRoute()
+    }
     }
 }
 
