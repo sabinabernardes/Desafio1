@@ -15,81 +15,47 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 import app.cash.turbine.test
+import io.mockk.every
+import kotlinx.coroutines.flow.flow
+import kotlin.test.assertFailsWith
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class UsersRepositoryImplTest {
-    private lateinit var localDataSource: UsersLocalDataSource
-    private lateinit var remoteDataSource: UsersRemoteDataSource
-    private lateinit var repository: UsersRepositoryImpl
 
-    @Before
-    fun setUp() {
-        localDataSource = mockk(relaxed = true)
-        remoteDataSource = mockk(relaxed = true)
-        repository = UsersRepositoryImpl(localDataSource, remoteDataSource)
-    }
+    private val local: UsersLocalDataSource = mockk(relaxed = true)
+    private val remote: UsersRemoteDataSource = mockk(relaxed = true)
+    private lateinit var repo: UsersRepositoryImpl
+
+    @Before fun setup() { repo = UsersRepositoryImpl(local, remote) }
 
     @Test
-    fun `given cache has users when getUsers called then emit cached users`() = runTest {
-        // given
-        val cachedUsers = listOf(UserDto("img", "name", "1", "username"))
-        coEvery { localDataSource.getUsers() } returns kotlinx.coroutines.flow.flow { emit(cachedUsers) }
-        coEvery { remoteDataSource.getUsers() } returns kotlinx.coroutines.flow.flow { emit(emptyList()) }
-        // when / then
-        repository.getUsers().test {
-            val item = awaitItem()
-            assertEquals(cachedUsers.map { it.toDomain() }, item)
-            cancelAndIgnoreRemainingEvents()
+    fun `observeUsers should map local dto to domain`() = runTest {
+        val dtos = listOf(UserDto("img", "name", "1", "username"))
+        every { local.getUsers() } returns flow { emit(dtos) }
+
+        repo.observeUsers().test {
+            assertEquals(dtos.map { it.toDomain() }, awaitItem())
+            cancelAndConsumeRemainingEvents()
         }
     }
 
     @Test
-    fun `given cache empty and api throws when getUsers called then emit empty list`() = runTest {
-        // given
-        coEvery { localDataSource.getUsers() } returns kotlinx.coroutines.flow.flow { emit(emptyList()) }
-        coEvery { remoteDataSource.getUsers() } returns kotlinx.coroutines.flow.flow { throw Exception("Network error") }
-        // when / then
-        repository.getUsers().test {
-            val item = awaitItem()
-            assertEquals(emptyList<User>(), item)
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    @Test
-    fun `given cache has users and api throws when getUsers called then emit cached users`() = runTest {
-        // given
-        val cachedUsers = listOf(UserDto("img", "CacheName", "3", "cacheuser"))
-        coEvery { localDataSource.getUsers() } returns kotlinx.coroutines.flow.flow { emit(cachedUsers) }
-        coEvery { remoteDataSource.getUsers() } returns kotlinx.coroutines.flow.flow { throw Exception("Network error") }
-        // when / then
-        repository.getUsers().test {
-            val item = awaitItem()
-            assertEquals(cachedUsers.map { it.toDomain() }, item)
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    @Test
-    fun `given remote has users when getUsers called then emit remote users and update cache`() = runTest {
-        // given
-        val cachedUsers = emptyList<UserDto>()
+    fun `refreshUsers should fetch remote and insert into local`() = runTest {
         val remoteUsers = listOf(UserDto("img2", "Name2", "2", "username2"))
-        coEvery { localDataSource.getUsers() } returns kotlinx.coroutines.flow.flow {
-            emit(cachedUsers)
-            delay(100)
-            emit(remoteUsers)
-        }
-        coEvery { remoteDataSource.getUsers() } returns kotlinx.coroutines.flow.flow { emit(remoteUsers) }
-        coEvery { localDataSource.insertUsers(remoteUsers) } returns Unit
+        every { remote.getUsers() } returns flow { emit(remoteUsers) }
 
-        // when / then:
-        repository.getUsers().test {
-            val first = awaitItem()
-            val second = awaitItem()
-            assertEquals(remoteUsers.map { it.toDomain() }, second)
-            cancelAndIgnoreRemainingEvents()
-        }
-        coVerify { localDataSource.insertUsers(remoteUsers) }
+        repo.refreshUsers()
+
+        coVerify { local.insertUsers(remoteUsers) }
+    }
+
+    @Test
+    fun `refreshUsers throws when remote fails and does not insert`() = runTest {
+        every { remote.getUsers() } returns flow<List<UserDto>> { throw Exception("Network error") }
+
+        val ex = assertFailsWith<Exception> { repo.refreshUsers() }
+        assertEquals("Network error", ex.message)
+
+        coVerify(exactly = 0) { local.insertUsers(any()) }
     }
 }

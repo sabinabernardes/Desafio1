@@ -1,66 +1,89 @@
 package com.bina.home.presentation.viewmodel
 
-import com.bina.home.domain.usecase.GetUsersUseCase
-import com.bina.home.domain.model.User
-import com.bina.home.presentation.screen.toUi
+import app.cash.turbine.test
+import com.bina.home.rule.MainDispatcherRule
+import com.bina.home.domain.usecase.ObserveUsersUseCase
+import com.bina.home.domain.usecase.RefreshUsersUseCase
 import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
-    private lateinit var getUsersUseCase: GetUsersUseCase
-    private lateinit var viewModel: HomeViewModel
-    private val testDispatcher = StandardTestDispatcher()
 
-    @Before
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-        getUsersUseCase = mockk()
+    @get:Rule
+    val mainRule = MainDispatcherRule()
+
+    private val observeUseCase: ObserveUsersUseCase = mockk()
+    private val refreshUseCase: RefreshUsersUseCase = mockk(relaxed = true)
+
+    @Test
+    fun `uiState emits Error when observe throws`() = runTest {
+        every { observeUseCase() } returns flow { throw RuntimeException("boom") }
+        coEvery { refreshUseCase() } returns Unit
+
+        val vm = HomeViewModel(observeUseCase, refreshUseCase)
+
+        vm.uiState.test {
+            val first = awaitItem()
+
+            when (first) {
+                HomeUiState.Loading -> {
+                    advanceUntilIdle()
+                    val second = awaitItem()
+                    assertTrue(second is HomeUiState.Error)
+                    assertEquals("boom", second.message)
+                }
+                is HomeUiState.Error -> {
+                    assertEquals("boom", first.message)
+                }
+                else -> error("Estado inesperado: $first")
+            }
+
+            cancelAndConsumeRemainingEvents()
+        }
     }
 
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
+
+    @Test
+    fun `init calls refresh`() = runTest {
+        // given
+        every { observeUseCase() } returns flowOf(emptyList())
+        coEvery { refreshUseCase() } returns Unit
+
+        // when
+        HomeViewModel(observeUseCase, refreshUseCase)
+
+        advanceUntilIdle()
+
+        // then
+        coVerify(exactly = 1) { refreshUseCase() }
     }
 
     @Test
-    fun `given use case returns users when fetchUsers called then uiState is Success`() = runTest {
+    fun `refresh can be called manually`() = runTest {
         // given
-        val expectedUsers = listOf(User("img", "name", "id", "username"))
-        coEvery { getUsersUseCase() } returns flowOf(expectedUsers)
-        viewModel = HomeViewModel(getUsersUseCase)
-        // when
-        viewModel.fetchUsers()
-        testDispatcher.scheduler.advanceUntilIdle()
-        // then
-        val state = viewModel.uiState.value
-        assertEquals(true, state is HomeUiState.Success)
-        val expectedUiUsers = expectedUsers.map { it.toUi() }
-        assertEquals(expectedUiUsers, (state as HomeUiState.Success).users)
-    }
+        every { observeUseCase() } returns flowOf(emptyList())
+        coEvery { refreshUseCase() } returns Unit
+        val vm = HomeViewModel(observeUseCase, refreshUseCase)
 
-    @Test
-    fun `given use case throws when fetchUsers called then uiState is Error`() = runTest {
-        // given
-        coEvery { getUsersUseCase() } returns flow { throw Exception("Network error") }
-        viewModel = HomeViewModel(getUsersUseCase)
+        advanceUntilIdle()
+
         // when
-        viewModel.fetchUsers()
-        testDispatcher.scheduler.advanceUntilIdle()
+        vm.refresh()
+        advanceUntilIdle()
+
         // then
-        val state = viewModel.uiState.value
-        assertEquals(true, state is HomeUiState.Error)
+        coVerify(exactly = 2) { refreshUseCase() }
     }
 }
