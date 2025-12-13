@@ -12,14 +12,10 @@ fun AppNavigation() {
     val navController = rememberNavController()
     NavHost(
         navController = navController,
-        startDestination = "home"
+        startDestination = NavigationRoutes.HOME
     ) {
-    composable("home") {
-        HomeRoute()
+        composable(NavigationRoutes.HOME) {
+            HomeRoute()
+        }
     }
-    }
-}
-
-fun NavHostController.navigateToHome() {
-    this.navigate("home")
 }
