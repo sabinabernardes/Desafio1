@@ -55,13 +55,10 @@ cd Desafio
 ---
 
 ## Screenshots / GIFs
-<!-- Substituir com GIF curtinho se possível -->
-<img width="334" height="734" alt="Screen1" src="https://github.com/user-attachments/assets/ef28131a-6cfb-45c0-9988-5c6a0bbcb5a2" />
-<img width="308" height="650" alt="Screen2" src="https://github.com/user-attachments/assets/d80a3253-26b1-4d02-94ce-6cb346023271" />
-<img width="310" height="710" alt="Screen3" src="https://github.com/user-attachments/assets/790c3f22-14b0-4e45-8972-157f2cb58c68" />
 
+https://github.com/user-attachments/assets/81590e8a-b5d5-4394-b509-5399b52f3954
 
-https://github.com/user-attachments/assets/6654631b-cebf-4160-aff9-a58deb3ce13f
+<img width="894" height="535" alt="Captura de Tela 2025-12-13 às 18 02 21" src="https://github.com/user-attachments/assets/76b44c03-68e9-4288-b0c4-3cccfdffe8be" />
 
 ---
 
@@ -153,7 +150,6 @@ Mapeamento dos cenários principais implementados:
 | UC-002 | App com Cache Local | ✅ | Rodar app, modo avião, reabrir |
 | UC-003 | Erro sem Cache + Retry | ✅ | Desconectar rede, clicar "Tentar Novamente" |
 | UC-004 | Pull to Refresh | ✅ | Deslizar para cima na tela |
-| UC-005 | Lista Vazia | ✅ | Simular resposta vazia da API |
 
 ---
 
