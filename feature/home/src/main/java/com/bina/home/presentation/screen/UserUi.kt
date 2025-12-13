@@ -9,9 +9,9 @@ data class UserUi(
     val id: String
 )
 
-internal fun User.toUi() = UserUi(
+internal fun User.toUi(): UserUi = UserUi(
     name = name.orEmpty(),
     username = username.orEmpty(),
     imageUrl = img.orEmpty(),
-    id = id.orEmpty()
+    id = id
 )
