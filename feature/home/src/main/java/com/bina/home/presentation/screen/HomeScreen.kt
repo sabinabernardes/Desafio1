@@ -2,6 +2,7 @@ package com.bina.home.presentation.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,16 +25,19 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.bina.core.designsystem.colors.ColorBackground
 import com.bina.core.designsystem.colors.ColorPrimary
-import com.bina.core.designsystem.components.UserCard
 import com.bina.core.designsystem.components.ShimmerUserListLoading
+import com.bina.core.designsystem.components.UserCard
 import com.bina.core.designsystem.dimens.Dimens
 import com.bina.core.designsystem.picpaytheme.PicPayTheme
 import com.bina.core.designsystem.typography.Typography
+import com.bina.home.R
 import com.bina.home.domain.model.User
 import com.bina.home.presentation.viewmodel.HomeUiState
 import com.bina.home.presentation.viewmodel.HomeViewModel
@@ -69,37 +73,50 @@ fun HomeScreenContent(
 ) {
     val pullRefreshState = rememberPullRefreshState(isRefreshing, { onRetry() })
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(ColorPrimary)
-            .pullRefresh(pullRefreshState),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.CenterHorizontally
+            .pullRefresh(pullRefreshState)
     ) {
-        PullRefreshIndicator(
-            refreshing = isRefreshing,
-            state = pullRefreshState,
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-            backgroundColor = ColorPrimary,
-            contentColor = ColorBackground
-        )
-
-        when (uiState) {
-            is HomeUiState.Loading -> LoadingSection()
-            is HomeUiState.Error -> ErrorSection(
-                message = uiState.message,
-                onRetry = onRetry,
-                isRefreshing = isRefreshing
-            )
-            is HomeUiState.Success -> {
-                if (uiState.users.isNotEmpty()) {
-                    UsersSection(users = uiState.users)
-                } else {
-                    EmptySection(onRefresh = onRetry)
+        Column(
+            modifier = Modifier
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            when (uiState) {
+                is HomeUiState.Loading -> LoadingSection()
+                is HomeUiState.Error -> ErrorSection(
+                    message = uiState.message,
+                    onRetry = onRetry,
+                    isRefreshing = isRefreshing
+                )
+                is HomeUiState.Success -> {
+                    if (uiState.users.isNotEmpty()) {
+                        UsersSection(users = uiState.users)
+                    } else {
+                        EmptySection(onRefresh = onRetry)
+                    }
                 }
             }
         }
+
+        PullRefreshIndicator(
+            refreshing = isRefreshing,
+            state = pullRefreshState,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .semantics {
+                    contentDescription = if (isRefreshing) {
+                        "Atualizando contatos"
+                    } else {
+                        "Puxe para atualizar contatos"
+                    }
+                },
+            backgroundColor = ColorPrimary,
+            contentColor = ColorBackground
+        )
     }
 }
 
@@ -111,7 +128,7 @@ private fun LoadingSection() {
             .background(ColorPrimary)
     ) {
         Text(
-            text = "Contatos",
+            text = stringResource(id = R.string.home_title_contacts),
             style = Typography.displayLarge,
             modifier = Modifier
                 .padding(
@@ -151,13 +168,13 @@ private fun ErrorSection(
         ) {
             if (isRefreshing) {
                 CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(Dimens.progressIndicatorSize),
                     color = ColorPrimary,
-                    strokeWidth = 2.dp
+                    strokeWidth = Dimens.progressIndicatorStrokeWidth
                 )
                 Spacer(Modifier.width(Dimens.spacing8))
             }
-            Text("Tentar novamente")
+            Text(stringResource(id = R.string.home_retry_button))
         }
     }
 }
@@ -167,7 +184,7 @@ private fun UsersSection(
     users: List<UserUi>
 ) {
     Text(
-        text = "Contatos",
+        text = stringResource(id = R.string.home_title_contacts),
         style = Typography.displayLarge,
         modifier = Modifier
             .padding(
@@ -208,12 +225,12 @@ private fun EmptySection(onRefresh: () -> Unit = {}) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Nenhum contato encontrado",
+            text = stringResource(id = R.string.home_empty_message),
             style = Typography.bodyLarge
         )
         Spacer(Modifier.height(Dimens.spacing24))
         Button(onClick = onRefresh) {
-            Text("Atualizar Agora")
+            Text(stringResource(id = R.string.home_empty_button))
         }
     }
 }
@@ -291,7 +308,7 @@ fun HomeScreenShimmerLoadingPreview() {
                 .padding(Dimens.spacing16)
         ) {
             Text(
-                text = "Contatos",
+                text = stringResource(id = R.string.home_title_contacts),
                 style = Typography.displayLarge,
                 modifier = Modifier
                     .padding(bottom = Dimens.spacing16)

@@ -1,5 +1,6 @@
 package com.bina.home.presentation.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bina.home.domain.usecase.ObserveUsersUseCase
@@ -48,7 +49,7 @@ internal class HomeViewModel(
             try {
                 refreshUsersUseCase()
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e("ErrorHomeViewModel", "Erro ao atualizar contatos", e)
             } finally {
                 _isRefreshing.value = false
             }

@@ -29,43 +29,65 @@ import com.bina.core.designsystem.dimens.Dimens
 import com.bina.core.designsystem.picpaytheme.PicPayTheme
 
 @Composable
-fun ShimmerLoadingItem(
-    modifier: Modifier = Modifier,
-    width: Float = 200f,
-    height: Float = 20f,
-    backgroundColor: Color = Color.LightGray.copy(alpha = 0.3f),
-    shimmerColor: Color = Color.White.copy(alpha = 0.5f)
-) {
+private fun createShimmerBrush(
+    shimmerOffset: Float,
+    targetValue: Float = Dimens.shimmerTargetValue,
+    backgroundColor: Color = Color.LightGray.copy(alpha = Dimens.shimmerBackgroundColorAlpha),
+    shimmerColor: Color = Color.White.copy(alpha = Dimens.shimmerHighlightColorAlpha)
+): Brush {
+    return Brush.linearGradient(
+        colors = listOf(
+            backgroundColor,
+            shimmerColor,
+            backgroundColor
+        ),
+        start = Offset(shimmerOffset - targetValue, Dimens.shimmerOffsetInitialValue),
+        end = Offset(shimmerOffset, Dimens.shimmerOffsetInitialValue)
+    )
+}
+
+@Composable
+private fun rememberShimmerOffset(
+    targetValue: Float = Dimens.shimmerTargetValue,
+    durationMillis: Int = Dimens.shimmerAnimationDuration
+): androidx.compose.runtime.State<Float> {
     val infiniteTransition = rememberInfiniteTransition(label = "shimmer")
 
-    val shimmerOffset = infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = width,
+    return infiniteTransition.animateFloat(
+        initialValue = Dimens.shimmerAnimationInitialValue,
+        targetValue = targetValue,
         animationSpec = infiniteRepeatable(
             animation = androidx.compose.animation.core.tween(
-                durationMillis = 1200,
+                durationMillis = durationMillis,
                 easing = FastOutLinearInEasing
             ),
             repeatMode = RepeatMode.Restart
         ),
         label = "shimmer_offset"
     )
+}
 
-    val shimmerBrush = Brush.linearGradient(
-        colors = listOf(
-            backgroundColor,
-            shimmerColor,
-            backgroundColor
-        ),
-        start = Offset(shimmerOffset.value - width, 0f),
-        end = Offset(shimmerOffset.value, 0f)
+@Composable
+fun ShimmerLoadingItem(
+    modifier: Modifier = Modifier,
+    width: Float = Dimens.shimmerLoadingItemDefaultWidth,
+    height: Float = Dimens.shimmerLoadingItemDefaultHeight,
+    backgroundColor: Color = Color.LightGray.copy(alpha = Dimens.shimmerBackgroundColorAlpha),
+    shimmerColor: Color = Color.White.copy(alpha = Dimens.shimmerHighlightColorAlpha)
+) {
+    val shimmerOffset = rememberShimmerOffset(targetValue = width)
+    val shimmerBrush = createShimmerBrush(
+        shimmerOffset = shimmerOffset.value,
+        targetValue = width,
+        backgroundColor = backgroundColor,
+        shimmerColor = shimmerColor
     )
 
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(height.dp)
-            .background(brush = shimmerBrush, shape = RoundedCornerShape(4.dp))
+            .background(brush = shimmerBrush, shape = RoundedCornerShape(Dimens.shimmerCornerRadius))
     )
 }
 
@@ -73,39 +95,24 @@ fun ShimmerLoadingItem(
 fun ShimmerUserCardLoading(
     modifier: Modifier = Modifier
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "shimmer")
-
-    val shimmerOffset = infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 400f,
-        animationSpec = infiniteRepeatable(
-            animation = androidx.compose.animation.core.tween(
-                durationMillis = 1200,
-                easing = FastOutLinearInEasing
-            ),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "shimmer_offset"
-    )
-
-    val shimmerBrush = Brush.linearGradient(
-        colors = listOf(
-            Color.LightGray.copy(alpha = 0.3f),
-            Color.White.copy(alpha = 0.5f),
-            Color.LightGray.copy(alpha = 0.3f)
-        ),
-        start = Offset(shimmerOffset.value - 400f, 0f),
-        end = Offset(shimmerOffset.value, 0f)
+    val shimmerOffset = rememberShimmerOffset()
+    val shimmerBrush = createShimmerBrush(
+        shimmerOffset = shimmerOffset.value
     )
 
     Box(
         modifier = modifier
             .fillMaxWidth()
             .background(ColorBackground)
-            .padding(vertical = Dimens.spacing12)
     ) {
         Row(
-            modifier = Modifier.padding(start = Dimens.spacing24),
+            modifier = Modifier
+                .padding(
+                    start = Dimens.spacing24,
+                    end = Dimens.spacing24,
+                    top = Dimens.spacing12,
+                    bottom = Dimens.spacing12
+                ),
             verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
         ) {
             Box(
@@ -119,16 +126,16 @@ fun ShimmerUserCardLoading(
             Column(modifier = Modifier.weight(1f)) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(0.7f)
-                        .height(12.dp)
-                        .background(brush = shimmerBrush, shape = RoundedCornerShape(4.dp))
+                        .fillMaxWidth(Dimens.shimmerCardNameWidthFraction)
+                        .height(Dimens.shimmerCardNameHeight)
+                        .background(brush = shimmerBrush, shape = RoundedCornerShape(Dimens.shimmerCornerRadius))
                 )
                 Spacer(modifier = Modifier.height(Dimens.spacing8))
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(0.9f)
-                        .height(14.dp)
-                        .background(brush = shimmerBrush, shape = RoundedCornerShape(4.dp))
+                        .fillMaxWidth(Dimens.shimmerCardUsernameWidthFraction)
+                        .height(Dimens.shimmerCardUsernameHeight)
+                        .background(brush = shimmerBrush, shape = RoundedCornerShape(Dimens.shimmerCornerRadius))
                 )
             }
         }
@@ -138,21 +145,15 @@ fun ShimmerUserCardLoading(
 @Composable
 fun ShimmerUserListLoading(
     modifier: Modifier = Modifier,
-    itemCount: Int = 5
+    itemCount: Int = Dimens.shimmerDefaultItemCount
 ) {
-    Column(modifier = modifier) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+    ) {
         repeat(itemCount) {
             ShimmerUserCardLoading()
-            Spacer(modifier = Modifier.height(Dimens.spacing8))
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun ShimmerLoadingItemPreview() {
-    PicPayTheme {
-        ShimmerLoadingItem()
     }
 }
 
@@ -168,7 +169,6 @@ fun ShimmerUserCardLoadingPreview() {
 @Composable
 fun ShimmerUserListLoadingPreview() {
     PicPayTheme {
-        ShimmerUserListLoading(itemCount = 3)
+        ShimmerUserListLoading(itemCount = Dimens.shimmerPreviewItemCount)
     }
 }
-

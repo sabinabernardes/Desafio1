@@ -13,4 +13,25 @@ object Dimens {
     val spacing40 = 40.dp
     val spacing52 = 52.dp
     val spacing64 = 64.dp
+
+    // Progress Indicator
+    val progressIndicatorSize = 20.dp
+    val progressIndicatorStrokeWidth = 2.dp
+
+    // Shimmer Loading
+    val shimmerAnimationDuration = 1200
+    val shimmerTargetValue = 400f
+    val shimmerCardNameHeight = 12.dp
+    val shimmerCardUsernameHeight = 14.dp
+    val shimmerBackgroundColorAlpha = 0.3f
+    val shimmerHighlightColorAlpha = 0.5f
+    val shimmerCardNameWidthFraction = 0.7f
+    val shimmerCardUsernameWidthFraction = 0.9f
+    val shimmerCornerRadius = 4.dp
+    val shimmerDefaultItemCount = 5
+    val shimmerPreviewItemCount = 3
+    val shimmerAnimationInitialValue = 0f
+    val shimmerOffsetInitialValue = 0f
+    val shimmerLoadingItemDefaultWidth = 200f
+    val shimmerLoadingItemDefaultHeight = 20f
 }
