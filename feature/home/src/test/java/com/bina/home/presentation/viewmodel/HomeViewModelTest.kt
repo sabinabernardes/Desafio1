@@ -54,7 +54,6 @@ class HomeViewModelTest {
         }
     }
 
-
     @Test
     fun `init calls refresh`() = runTest {
         // given
