@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Home Screen Strings -->
+    <string name="home_title_contacts">Contatos</string>
+    <string name="home_empty_message">Nenhum contato encontrado</string>
+    <string name="home_empty_button">Atualizar Agora</string>
+    <string name="home_retry_button">Tentar novamente</string>
+
+    <!-- Pull Refresh Accessibility Strings -->
+    <string name="home_pull_refresh_loading">Atualizando contatos</string>
+    <string name="home_pull_refresh_idle">Puxe para atualizar contatos</string>
+</resources>
+

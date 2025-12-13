@@ -9,6 +9,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -84,5 +85,61 @@ class HomeViewModelTest {
 
         // then
         coVerify(exactly = 2) { refreshUseCase() }
+    }
+
+    @Test
+    fun `isRefreshing flag is set during refresh`() = runTest {
+        // given
+        every { observeUseCase() } returns flowOf(emptyList())
+        coEvery { refreshUseCase() } coAnswers { delay(100); Unit }
+
+        val vm = HomeViewModel(observeUseCase, refreshUseCase)
+        advanceUntilIdle()
+
+        // when/then
+        vm.isRefreshing.test {
+            assertEquals(false, awaitItem()) // initial state
+            vm.refresh()
+            assertEquals(true, awaitItem()) // during refresh
+            advanceUntilIdle()
+            assertEquals(false, awaitItem()) // after refresh
+            cancelAndConsumeRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `refresh prevents multiple simultaneous calls`() = runTest {
+        // given
+        every { observeUseCase() } returns flowOf(emptyList())
+        coEvery { refreshUseCase() } coAnswers { delay(200); Unit }
+
+        val vm = HomeViewModel(observeUseCase, refreshUseCase)
+        advanceUntilIdle()
+
+        // when - call refresh twice rapidly
+        vm.refresh()
+        vm.refresh() // should be ignored due to debounce
+
+        advanceUntilIdle()
+
+        // then - refreshUseCase should only be called once (init + 1st refresh, not 2nd)
+        coVerify(exactly = 2) { refreshUseCase() }
+    }
+
+    @Test
+    fun `refresh handles exceptions gracefully`() = runTest {
+        // given
+        every { observeUseCase() } returns flowOf(emptyList())
+        coEvery { refreshUseCase() } throws Exception("Network error")
+
+        val vm = HomeViewModel(observeUseCase, refreshUseCase)
+        advanceUntilIdle()
+
+        // when
+        vm.refresh()
+        advanceUntilIdle()
+
+        // then - should not crash and isRefreshing should be false
+        assertEquals(false, vm.isRefreshing.value)
     }
 }

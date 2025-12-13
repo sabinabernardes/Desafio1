@@ -1,12 +1,15 @@
 package com.bina.home.presentation.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bina.home.domain.usecase.ObserveUsersUseCase
 import com.bina.home.domain.usecase.RefreshUsersUseCase
 import com.bina.home.presentation.screen.toUi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -16,6 +19,9 @@ internal class HomeViewModel(
     observeUsersUseCase: ObserveUsersUseCase,
     private val refreshUsersUseCase: RefreshUsersUseCase
 ) : ViewModel() {
+
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
     val uiState: StateFlow<HomeUiState> =
         observeUsersUseCase()
@@ -31,10 +37,23 @@ internal class HomeViewModel(
                 initialValue = HomeUiState.Loading
             )
 
-    init { refresh() }
+    init {
+        refresh()
+    }
 
-    fun refresh() = viewModelScope.launch {
-        runCatching { refreshUsersUseCase() }
+    fun refresh() {
+        if (_isRefreshing.value) return
+
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            try {
+                refreshUsersUseCase()
+            } catch (e: Exception) {
+                Log.e("ErrorHomeViewModel", "Erro ao atualizar contatos", e)
+            } finally {
+                _isRefreshing.value = false
+            }
+        }
     }
 }
 

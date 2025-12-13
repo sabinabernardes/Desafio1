@@ -1,7 +1,6 @@
 package com.bina.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -12,14 +11,10 @@ fun AppNavigation() {
     val navController = rememberNavController()
     NavHost(
         navController = navController,
-        startDestination = "home"
+        startDestination = NavigationRoutes.HOME
     ) {
-        composable("home") {
-            HomeRoute(navController)
+        composable(NavigationRoutes.HOME) {
+            HomeRoute()
         }
     }
-}
-
-fun NavHostController.navigateToHome() {
-    this.navigate("home")
 }
