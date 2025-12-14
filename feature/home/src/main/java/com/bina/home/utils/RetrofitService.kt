@@ -1,23 +1,26 @@
 package com.bina.home.utils
 
 import com.bina.home.data.service.PicPayService
-import com.google.gson.GsonBuilder
+import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 
-const val BASE_URL = "https://609a908e0f5a13001721b74e.mockapi.io/picpay/api/"
+private const val BASE_URL = "https://609a908e0f5a13001721b74e.mockapi.io/picpay/api/"
 
-internal class RetrofitService {
-    companion object {
-        val service: PicPayService
+internal object RetrofitService {
 
-        init {
-            val gson = GsonBuilder().setLenient().create()
-            val retrofit = Retrofit.Builder()
-                .baseUrl(BASE_URL)
-                .addConverterFactory(GsonConverterFactory.create(gson))
-                .build()
-            service = retrofit.create(PicPayService::class.java)
-        }
-    }
+    private val client = OkHttpClient.Builder()
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(10, TimeUnit.SECONDS)
+        .writeTimeout(10, TimeUnit.SECONDS)
+        .build()
+
+    private val retrofit: Retrofit = Retrofit.Builder()
+        .baseUrl(BASE_URL)
+        .client(client)
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+
+    val service: PicPayService = retrofit.create(PicPayService::class.java)
 }

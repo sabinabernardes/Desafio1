@@ -1,98 +1,103 @@
 package com.bina.navigation
 
+import androidx.navigation.NavDestination
 import androidx.navigation.NavHostController
+import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import io.mockk.every
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 class NavigationManagerTest {
 
     private lateinit var navController: NavHostController
-    private lateinit var navigationManager: NavigationManager
+    private lateinit var navManager: NavigationManager
 
     @Before
     fun setup() {
         navController = mockk(relaxed = true)
-        navigationManager = NavigationManager(navController)
+        navManager = NavigationManager(navController)
     }
 
     @Test
-    fun `navigateToHome should not navigate if already on HOME`() {
-        every { navController.currentDestination?.route } returns NavigationRoutes.HOME
+    fun `navigateToHome returns false when already on HOME and does not navigate`() {
+        // given
+        val destination: NavDestination = mockk()
+        every { destination.route } returns NavigationRoutes.HOME
+        every { navController.currentDestination } returns destination
 
-        navigationManager.navigateToHome()
+        // when
+        val result = navManager.navigateToHome()
 
+        // then
+        assertFalse(result)
         verify(exactly = 0) { navController.navigate(NavigationRoutes.HOME) }
     }
 
     @Test
-    fun `canNavigateBack should return true when backstack has entries`() {
-        every { navController.previousBackStackEntry } returns mockk()
+    fun `navigateToHome navigates when not on HOME`() {
+        val destination: NavDestination = mockk()
+        every { destination.route } returns "OTHER"
+        every { navController.currentDestination } returns destination
 
-        val result = navigationManager.canNavigateBack()
+        val result = navManager.navigateToHome()
 
         assertTrue(result)
+        verify(exactly = 1) {
+            navController.navigate(
+                NavigationRoutes.HOME,
+                any<androidx.navigation.NavOptionsBuilder.() -> Unit>()
+            )
+        }
     }
 
     @Test
-    fun `canNavigateBack should return false when backstack is empty`() {
-        every { navController.previousBackStackEntry } returns null
+    fun `navigateToHome calls onError and returns false when navigate throws`() {
+        val errors = mutableListOf<Throwable>()
+        navManager = NavigationManager(navController) { errors.add(it) }
 
-        val result = navigationManager.canNavigateBack()
+        val destination: NavDestination = mockk()
+        every { destination.route } returns "OTHER"
+        every { navController.currentDestination } returns destination
+
+        every {
+            navController.navigate(
+                NavigationRoutes.HOME,
+                any<androidx.navigation.NavOptionsBuilder.() -> Unit>()
+            )
+        } throws IllegalStateException("boom")
+
+        val result = navManager.navigateToHome()
 
         assertFalse(result)
+        assertEquals(1, errors.size)
+        assertEquals("boom", errors.first().message)
     }
 
     @Test
-    fun `navigateBack should call popBackStack when can navigate back`() {
-        every { navController.previousBackStackEntry } returns mockk()
+    fun `navigateBack delegates to popBackStack`() {
+        // given
+        every { navController.popBackStack() } returns true
 
-        navigationManager.navigateBack()
+        // when
+        val result = navManager.navigateBack()
 
-        verify { navController.popBackStack() }
+        // then
+        assertTrue(result)
+        verify(exactly = 1) { navController.popBackStack() }
     }
 
     @Test
-    fun `navigateBack should not call popBackStack when cannot navigate back`() {
-        every { navController.previousBackStackEntry } returns null
+    fun `getCurrentRoute returns current destination route`() {
+        // given
+        val destination: NavDestination = mockk()
+        every { destination.route } returns NavigationRoutes.HOME
+        every { navController.currentDestination } returns destination
 
-        navigationManager.navigateBack()
-
-        verify(exactly = 0) { navController.popBackStack() }
-    }
-
-    @Test
-    fun `getCurrentRoute should return current route`() {
-        val mockDestination = mockk<androidx.navigation.NavDestination>()
-        every { mockDestination.route } returns NavigationRoutes.HOME
-        every { navController.currentDestination } returns mockDestination
-
-        val route = navigationManager.getCurrentRoute()
-
-        assertEquals(NavigationRoutes.HOME, route)
-    }
-
-    @Test
-    fun `getCurrentRoute should return null when no destination`() {
-        every { navController.currentDestination } returns null
-
-        val route = navigationManager.getCurrentRoute()
-
-        assertEquals(null, route)
-    }
-
-    @Test
-    fun `navigateToHome should handle navigation exceptions gracefully`() {
-        every { navController.currentDestination?.route } returns null
-
-        navigationManager.navigateToHome()
-
-        assertTrue(true)
+        // then
+        assertEquals(NavigationRoutes.HOME, navManager.getCurrentRoute())
     }
 }
-

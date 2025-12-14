@@ -2,29 +2,22 @@ package com.bina.navigation
 
 import androidx.navigation.NavHostController
 
-class NavigationManager(private val navController: NavHostController) {
+class NavigationManager(
+    private val navController: NavHostController,
+    private val onError: (Throwable) -> Unit = {}
+) {
+    fun navigateToHome(): Boolean {
+        if (navController.currentDestination?.route == NavigationRoutes.HOME) return false
 
-    fun navigateToHome() {
-        try {
-            if (navController.currentDestination?.route != NavigationRoutes.HOME) {
-                navController.navigate(NavigationRoutes.HOME) {
-                    popUpTo(NavigationRoutes.HOME) { inclusive = true }
-                    launchSingleTop = true
-                }
+        return runCatching {
+            navController.navigate(NavigationRoutes.HOME) {
+                launchSingleTop = true
             }
-        } catch (e: Exception) {
-            println("Navigation error: ${e.message}")
-        }
+        }.onFailure(onError).isSuccess
     }
 
-    fun canNavigateBack(): Boolean = navController.previousBackStackEntry != null
-
-    fun navigateBack() {
-        if (canNavigateBack()) {
-            navController.popBackStack()
-        }
-    }
-
+    fun navigateBack(): Boolean = navController.popBackStack()
     fun getCurrentRoute(): String? = navController.currentDestination?.route
 }
+
 

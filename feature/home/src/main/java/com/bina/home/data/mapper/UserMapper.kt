@@ -3,32 +3,31 @@ package com.bina.home.data.mapper
 import com.bina.home.data.database.UserEntity
 import com.bina.home.data.model.UserDto
 import com.bina.home.domain.model.User
-import com.bina.home.presentation.screen.UserUi
-import java.util.UUID
 
-internal fun UserDto.toDomain(): User {
-    return User(
-        img = this.img,
-        name = this.name,
-        id = this.id,
-        username = this.username
+internal fun UserDto.toDomain(): User =
+    User(
+        img = img,
+        name = name.orEmpty(),
+        id = id,
+        username = username.orEmpty()
     )
-}
 
 internal fun UserDto.toEntity(): UserEntity {
+    require(id.isNotBlank()) { "UserDto.id cannot be blank" }
+
     return UserEntity(
-        id = this.id.ifBlank { UUID.randomUUID().toString() },
-        name = this.name,
-        username = this.username,
-        img = this.img
+        id = id,
+        name = name,
+        username = username,
+        img = img
     )
 }
 
-internal fun UserEntity.toDto(): UserDto {
-    return UserDto(
-        img = this.img,
-        name = this.name,
-        id = this.id,
-        username = this.username
+internal fun UserEntity.toDto(): UserDto =
+    UserDto(
+        img = img,
+        name = name,
+        id = id,
+        username = username
     )
-}
+
