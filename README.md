@@ -4,8 +4,6 @@
 
 ![badge-android](https://img.shields.io/badge/Android-Compose-3DDC84)
 ![badge-kotlin](https://img.shields.io/badge/Kotlin-2.x-blue)
-![badge-ci](https://img.shields.io/badge/CI-Gradle%20%2B%20Detekt-lightgrey)
-
 ---
 
 ## Como rodar 
@@ -137,7 +135,6 @@ sealed class HomeUiState {
 | Tipo | Ferramentas | Casos principais |
 | ---- | ----------- | ---------------- |
 | Unit | JUnit, MockK, Turbine | VM emite Loading→Success; Repo acessa cache e API |
-| Instrumentado | Room in-memory |
 | UI Compose | Compose Test | Estados loading/error/success e ações |
 
 ---
@@ -192,24 +189,23 @@ A ideia não é só listar tecnologias, mas mostrar **o raciocínio** por trás 
 
 ### **Testes e Qualidade**
 - **Testes de ViewModel**  (validação de fluxo de estados).
-- **CI** com build, lint, testes.
-- **ktlintCheck** e **Detekt** para manter o padrão de código.
-
 ---
 
 ## 🎯 Coisas Legais Pra Ver Por Aqui
 
 Aqui estão os 11 highlights técnicos.
 
+<details>
+
 ### 🏗️ Padrões & Arquitetura
 
-#### 1. **Sealed Class Pattern para Estados** ⭐⭐⭐
+#### 1. **Sealed Class Pattern para Estados** 
 - **Arquivo**: [HomeUiState.kt](feature/home/src/main/java/com/bina/home/presentation/viewmodel/HomeUiState.kt)
 - **O que**: Estados mutuamente exclusivos (Loading, Success, Error)
 - **Por quê**: Type-safe, impossível ter estado inválido
 - **Ganho**: `when (uiState)` força cobertura de TODOS os casos
 
-#### 2. **Separação de Responsabilidades em Composables** ⭐⭐⭐
+#### 2. **Separação de Responsabilidades em Composables** 
 - **Arquivo**: [HomeScreen.kt](feature/home/src/main/java/com/bina/home/presentation/screen/HomeScreen.kt)
 - **Estrutura**:
   - `HomeRoute()` → DI (Koin)
@@ -218,57 +214,57 @@ Aqui estão os 11 highlights técnicos.
   - `LoadingSection()`, `ErrorSection()`, `UsersSection()` → Especializadas
 - **Ganho**: Fácil testar, reutilizar, mockar
 
-#### 3. **StateFlow + Coroutines + Catch** ⭐⭐⭐
+#### 3. **StateFlow + Coroutines + Catch** 
 - **Arquivo**: [HomeViewModel.kt](feature/home/src/main/java/com/bina/home/presentation/viewmodel/HomeViewModel.kt)
 - **Padrão**: `observeUseCase().map().catch().stateIn()`
 - **Ganho**: Tratamento de erro centralizado, sem callbacks
 
 ### 🎨 UI/UX Padrões
 
-#### 4. **Pull-to-Refresh com Acessibilidade** ⭐⭐
+#### 4. **Pull-to-Refresh com Acessibilidade** 
 - **Destaque**: `PullRefreshIndicator` com `semantics { contentDescription }`
 - **Dinamismo**: Descrição muda (loading vs idle)
 - **A11y**: TalkBack funciona perfeitamente
 
-#### 5. **Estados Vazios vs Erros (UX Crítica)** ⭐⭐
+#### 5. **Estados Vazios vs Erros (UX Crítica)** 
 - **Diferença**:
   - **Vazio** = Sucesso sem dados → "Atualizar Agora"
   - **Erro** = Falha real → "Tentar Novamente"
 - **Ganho**: Usuário entende o que aconteceu
 
-#### 6. **Shimmer Loading Profissional** ⭐⭐
+#### 6. **Shimmer Loading Profissional** 
 - **Componente**: `ShimmerUserListLoading()` (Design System)
 - **Quando**: Durante LoadingSection
 - **Por quê**: Feedback visual mantém engajamento
 
-#### 7. **Retry com Estados de Desabilitar** ⭐⭐
+#### 7. **Retry com Estados de Desabilitar** 
 - **Detalhe**: Botão desabilita durante retry + loading spinner
 - **Ganho**: Evita múltiplos cliques, feedback visual claro
 
 ### ⚡ Performance & Otimizações
 
-#### 8. **LazyColumn com Key para Recomposição Eficiente** ⭐⭐
+#### 8. **LazyColumn com Key para Recomposição Eficiente** 
 - **Código**: `items(items = users, key = { it.id })`
 - **Por quê**: Cada item tem ID, recompõe só os novos
 - **Impacto**: Performance em listas 1000+ items
 
-#### 9. **Design System com Tokens Centralizados** ⭐⭐
+#### 9. **Design System com Tokens Centralizados** 
 - **Uso**: `Dimens.spacing16`, `Typography.displayLarge`, `ColorPrimary`
 - **Ganho**: Trocar tema = mudar 1 arquivo
 - **Coerência**: Toda UI segue mesma escala
 
-#### 10. **collectAsState() para Recomposição Fina** ⭐⭐
+#### 10. **collectAsState() para Recomposição Fina** 
 - **Código**: Cada `by viewModel.state.collectAsState()`
 - **Ganho**: Recompõe só quando estado muda (não toda frame)
 
 ### 🧪 Testabilidade
 
-#### 11. **Composables Puros (100% Testáveis)** ⭐⭐⭐
+#### 11. **Composables Puros (100% Testáveis)** 
 - **Função**: `HomeScreenContent()` é pura
 - **Sem**: Koin, ViewModel, Context
 - **Resultado**: Fácil testar com Compose Testing Library
 
-
+</details>
 
 ## 👤 Autor
 
