@@ -51,7 +51,7 @@ cd Desafio
 | Assíncrono | Coroutines + Flow |
 | Network | Retrofit |
 | Cache | Room |
-| Testes | JUnit5, MockK, Compose UI Testing |
+| Testes | JUnit5, MockK, Turbine, Compose Testing |
 
 ---
 
@@ -112,6 +112,7 @@ flowchart TD
 sealed class HomeUiState {
     object Loading : HomeUiState()
     data class Success(val users: List<UserUi>) : HomeUiState()
+    object Empty : HomeUiState()
     data class Error(val message: String) : HomeUiState()
 }
 ```
@@ -145,12 +146,13 @@ sealed class HomeUiState {
 
 Mapeamento dos cenários principais implementados:
 
-| UC | Cenário | Status | Como Testar |
-|----|---------|--------|-------------|
-| UC-001 | Primeira Instalação + Shimmer | ✅ | Abrir app pela primeira vez |
-| UC-002 | App com Cache Local | ✅ | Rodar app, modo avião, reabrir |
+| UC | Cenário | Status | Como Testar                                 |
+|----|---------|--------|---------------------------------------------|
+| UC-001 | Primeira Instalação + Shimmer | ✅ | Abrir app pela primeira vez                 |
+| UC-002 | App com Cache Local | ✅ | Rodar app, modo avião, reabrir              |
 | UC-003 | Erro sem Cache + Retry | ✅ | Desconectar rede, clicar "Tentar Novamente" |
-| UC-004 | Pull to Refresh | ✅ | Deslizar para cima na tela |
+| UC-004 | Pull to Refresh | ✅ | click na tela                               |
+| UC-005 | Lista Vazia | ✅ | Simular resposta vazia da API               |
 
 ---
 
@@ -163,6 +165,7 @@ A ideia não é só listar tecnologias, mas mostrar **o raciocínio** por trás 
 - **Jetpack Compose** → Mais rápido pra iterar e testar.  
   _Trade-off_: curva de aprendizado e atenção à recomposição; resolvido com UDF + estados imutáveis.
 - **Unidirectional Data Flow (UDF)** com `StateFlow` → Estado único, previsível e fácil de testar.
+  - Inclui `distinctUntilChanged()` para evitar duplicatas
 - **Kotlin Flow** no domínio/repos** → Fluxos reativos pra dados contínuos (ex.: Room emite mudanças automaticamente).  
   _Benefício_: evita callbacks e facilita composição de operações assíncronas.  
   _Trade-off_: exige atenção a escopo/cancelamento; mitigado com `viewModelScope` e operadores como `onStart`/`catch`.
@@ -174,6 +177,7 @@ A ideia não é só listar tecnologias, mas mostrar **o raciocínio** por trás 
 
 ### **Estratégia de Dados**
 - **Offline-first com Room** → Resposta instantânea do cache local, seguido de atualização em segundo plano (*stale-while-revalidate*).
+- **ErrorMapper** → Mapeamento robusto de exceções para tipos específicos (Network, Unauthorized, NotFound, Unknown) com mensagens amigáveis ao usuário.
 
 ### **Testes e Qualidade**
 - **Testes de ViewModel**  (validação de fluxo de estados).
@@ -253,7 +257,7 @@ Aqui estão os 11 highlights técnicos.
 - **Sem**: Koin, ViewModel, Context
 - **Resultado**: Fácil testar com Compose Testing Library
 
----
+
 
 ## 👤 Autor
 
@@ -262,3 +266,22 @@ Aqui estão os 11 highlights técnicos.
 ## 📝 Licença
 
 MIT License
+
+---
+
+## 🚀 Próximos Passos
+
+### 🔄 Curto Prazo 
+- [ ] Implementar testes E2E com UI Automator
+- [ ] GitHub Actions CI/CD com relatórios de cobertura
+
+### 📈 Médio Prazo
+- [ ] Feature flags para rollout gradual
+- [ ] Performance profiling e otimização
+- [ ] Deep linking e navegação avançada
+
+### 🚀 Longo Prazo
+- [ ] Analytics e crash reporting (Firebase)
+- [ ] Documentação de API com Swagger
+- [ ] Suporte a múltiplas localidades (i18n)
+
