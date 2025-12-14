@@ -146,11 +146,23 @@ sealed class HomeUiState {
 
 Mapeamento dos cenários principais implementados:
 
-| UC | Cenário | Status | Como Testar                                 |
-|----|---------|--------|---------------------------------------------|
-| UC-001 | Primeira Instalação + Shimmer | ✅ | Abrir app pela primeira vez                 |
+| UC | Cenário | Status | Como Testar                                 |Evidencia |
+|----|---------|--------|--------------------------------------------------------|
+| UC-001 | Primeira Instalação + Shimmer | ✅ | Abrir app pela primeira vez                 | 
+
+https://github.com/user-attachments/assets/7005ad26-09e8-4650-9caa-65360abfa3db
+
+ | 
 | UC-002 | App com Cache Local | ✅ | Rodar app, modo avião, reabrir              |
+
+https://github.com/user-attachments/assets/14dd3b99-37f4-4bcc-9a57-3bfc52272a55
+
+ |
 | UC-003 | Erro sem Cache + Retry | ✅ | Desconectar rede, clicar "Tentar Novamente" |
+
+https://github.com/user-attachments/assets/f0036108-ee57-4309-83fd-ecc296d87483
+
+ |
 | UC-004 | Pull to Refresh | ✅ | click na tela                               |
 | UC-005 | Lista Vazia | ✅ | Simular resposta vazia da API               |
 
