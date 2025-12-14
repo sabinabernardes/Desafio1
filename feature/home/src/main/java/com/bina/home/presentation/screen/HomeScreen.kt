@@ -25,6 +25,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -126,6 +127,9 @@ private fun LoadingSection() {
         modifier = Modifier
             .fillMaxSize()
             .background(ColorPrimary)
+            .testTag("loadingSection"),
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             text = stringResource(id = R.string.home_title_contacts),
@@ -156,7 +160,8 @@ private fun ErrorSection(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(ColorBackground),
+            .background(ColorBackground)
+            .testTag("errorSection"),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -164,7 +169,8 @@ private fun ErrorSection(
         Spacer(Modifier.height(Dimens.spacing16))
         Button(
             onClick = onRetry,
-            enabled = !isRefreshing
+            enabled = !isRefreshing,
+            modifier = Modifier.testTag("retryButton")
         ) {
             if (isRefreshing) {
                 CircularProgressIndicator(
@@ -201,6 +207,7 @@ private fun UsersSection(
         modifier = Modifier
             .fillMaxSize()
             .background(ColorPrimary)
+            .testTag("usersSection")
     ) {
         items(
             items = users,
@@ -220,7 +227,8 @@ private fun EmptySection(onRefresh: () -> Unit = {}) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(ColorPrimary),
+            .background(ColorPrimary)
+            .testTag("emptySection"),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
