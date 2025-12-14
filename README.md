@@ -67,8 +67,8 @@ https://github.com/user-attachments/assets/81590e8a-b5d5-4394-b509-5399b52f3954
 flowchart TD
 
   subgraph P["Presentation"]
-    UI[Compose] -->|Intents| VM[ViewModel]
-    VM -->|StateFlow<UiState>| UI
+    UI[Compose] -->|Função<br/>refresh| VM[ViewModel]
+    VM -->|StateFlow<br/>uiState| UI
   end
 
   subgraph D["Domain"]
