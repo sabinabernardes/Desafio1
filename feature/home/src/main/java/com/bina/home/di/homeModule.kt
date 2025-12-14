@@ -6,6 +6,7 @@ import com.bina.home.data.localdatasource.UsersLocalDataSource
 import com.bina.home.data.localdatasource.UsersLocalDataSourceImpl
 import com.bina.home.data.remotedatasource.UsersRemoteDataSource
 import com.bina.home.data.remotedatasource.UsersRemoteDataSourceImpl
+import com.bina.home.data.repository.ErrorMapper
 import com.bina.home.data.repository.UsersRepositoryImpl
 import com.bina.home.domain.repository.UsersRepository
 import com.bina.home.domain.usecase.ObserveUsersUseCase
@@ -24,17 +25,15 @@ val homeModule = module {
     }
     single { get<AppDatabase>().userDao() }
 
-    // Data sources
+    single { ErrorMapper() }
+
     single<UsersRemoteDataSource> { UsersRemoteDataSourceImpl(get()) }
     single<UsersLocalDataSource>  { UsersLocalDataSourceImpl(get()) }
 
-    // Repository
-    single<UsersRepository> { UsersRepositoryImpl(get(), get()) }
+    single<UsersRepository> { UsersRepositoryImpl(get(), get(), get()) }
 
-    // UseCases
     factory { ObserveUsersUseCase(get()) }
     factory { RefreshUsersUseCase(get()) }
 
-    // ViewModel
     viewModel { HomeViewModel(get(), get()) }
 }

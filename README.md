@@ -36,9 +36,10 @@ cd Desafio
 6. [Política de Cache](#política-de-cache)
 7. [Como Testar](#como-testar)
 8. [Testes](#testes)
-9. [Trade-offs e Decisões Técnicas](#trade-offs-e-decisões-técnicas)
-10. [Coisas legais pra ver aqui](#coisas-legais-pra-ver-aqui)
-11. [Próximos Passos](#próximos-passos)
+9. [Casos de Uso](#-casos-de-uso)
+10. [Trade-offs e Decisões Técnicas](#trade-offs-e-decisões-técnicas)
+11. [Coisas Legais Pra Ver](#coisas-legais-pra-ver-por-aqui)
+12. [Próximos Passos](#próximos-passos)
 
 ---
 
@@ -50,7 +51,7 @@ cd Desafio
 | Assíncrono | Coroutines + Flow |
 | Network | Retrofit |
 | Cache | Room |
-| Testes | JUnit5, MockK, Compose UI Testing |
+| Testes | JUnit5, MockK, Turbine, Compose Testing |
 
 ---
 
@@ -111,6 +112,7 @@ flowchart TD
 sealed class HomeUiState {
     object Loading : HomeUiState()
     data class Success(val users: List<UserUi>) : HomeUiState()
+    object Empty : HomeUiState()
     data class Error(val message: String) : HomeUiState()
 }
 ```
@@ -144,12 +146,13 @@ sealed class HomeUiState {
 
 Mapeamento dos cenários principais implementados:
 
-| UC | Cenário | Status | Como Testar |
-|----|---------|--------|-------------|
-| UC-001 | Primeira Instalação + Shimmer | ✅ | Abrir app pela primeira vez |
-| UC-002 | App com Cache Local | ✅ | Rodar app, modo avião, reabrir |
+| UC | Cenário | Status | Como Testar                                 |
+|----|---------|--------|---------------------------------------------|
+| UC-001 | Primeira Instalação + Shimmer | ✅ | Abrir app pela primeira vez                 |
+| UC-002 | App com Cache Local | ✅ | Rodar app, modo avião, reabrir              |
 | UC-003 | Erro sem Cache + Retry | ✅ | Desconectar rede, clicar "Tentar Novamente" |
-| UC-004 | Pull to Refresh | ✅ | Deslizar para cima na tela |
+| UC-004 | Pull to Refresh | ✅ | click na tela                               |
+| UC-005 | Lista Vazia | ✅ | Simular resposta vazia da API               |
 
 ---
 
@@ -162,6 +165,7 @@ A ideia não é só listar tecnologias, mas mostrar **o raciocínio** por trás 
 - **Jetpack Compose** → Mais rápido pra iterar e testar.  
   _Trade-off_: curva de aprendizado e atenção à recomposição; resolvido com UDF + estados imutáveis.
 - **Unidirectional Data Flow (UDF)** com `StateFlow` → Estado único, previsível e fácil de testar.
+  - Inclui `distinctUntilChanged()` para evitar duplicatas
 - **Kotlin Flow** no domínio/repos** → Fluxos reativos pra dados contínuos (ex.: Room emite mudanças automaticamente).  
   _Benefício_: evita callbacks e facilita composição de operações assíncronas.  
   _Trade-off_: exige atenção a escopo/cancelamento; mitigado com `viewModelScope` e operadores como `onStart`/`catch`.
@@ -173,6 +177,7 @@ A ideia não é só listar tecnologias, mas mostrar **o raciocínio** por trás 
 
 ### **Estratégia de Dados**
 - **Offline-first com Room** → Resposta instantânea do cache local, seguido de atualização em segundo plano (*stale-while-revalidate*).
+- **ErrorMapper** → Mapeamento robusto de exceções para tipos específicos (Network, Unauthorized, NotFound, Unknown) com mensagens amigáveis ao usuário.
 
 ### **Testes e Qualidade**
 - **Testes de ViewModel**  (validação de fluxo de estados).
@@ -181,50 +186,78 @@ A ideia não é só listar tecnologias, mas mostrar **o raciocínio** por trás 
 
 ---
 
-## 📌 Coisas legais pra ver aqui
+## 🎯 Coisas Legais Pra Ver Por Aqui
 
-Quer ver de perto arquitetura bem estruturada, Compose aplicado com boas práticas e atenção aos detalhes?
-Aqui estão os destaques do repositório, com links diretos para as partes mais interessantes — tudo organizado de forma modular para facilitar leitura e testes.
+Aqui estão os 11 highlights técnicos.
 
-### 💻 UI & Compose (módulo Home)
-- **[HomeScreen](feature/home/src/main/java/com/bina/home/presentation/screen/HomeScreen.kt)** → Compose com estados claros (Loading/Success/Error) e UI desacoplada da VM.  
-- **[Design System](core/designsystem)** *(módulo dedicado)* → Tokens de cor, tipografia, espaçamentos e componentes reutilizáveis com previews.
+### 🏗️ Padrões & Arquitetura
 
-### 🏗 Arquitetura & Dados (módulo Home)
-- **[HomeViewModel](feature/home/src/main/java/com/bina/home/presentation/viewmodel/HomeViewModel.kt)** → UDF com `StateFlow` e estado imutável, resiliente a rotação/process-death.  
-- **[UserRepositoryImpl](feature/home/src/main/java/com/bina/home/data/repository/UsersRepositoryImpl.kt)** → Estratégia **offline-first**: lê do Room primeiro e atualiza em segundo plano via API.  
-- **[Local Data Source](feature/home/src/main/java/com/bina/home/data/localdatasource/UsersLocalDataSourceImpl.kt)** → Implementação que lê/escreve no Room.  
-- **[Remote Data Source](feature/home/src/main/java/com/bina/home/data/remotedatasource/UsersRemoteDataSourceImpl.kt)** → Implementação que consulta a API via Retrofit.
+#### 1. **Sealed Class Pattern para Estados** ⭐⭐⭐
+- **Arquivo**: [HomeUiState.kt](feature/home/src/main/java/com/bina/home/presentation/viewmodel/HomeUiState.kt)
+- **O que**: Estados mutuamente exclusivos (Loading, Success, Error)
+- **Por quê**: Type-safe, impossível ter estado inválido
+- **Ganho**: `when (uiState)` força cobertura de TODOS os casos
 
-  ### 🧪 Testes
-- **[VM Tests](feature/home/src/test/java/com/bina/home/presentation/viewmodel/HomeViewModelTest.kt)** → fluxo de uiState.  
-- **[HomeScreenUiTest](feature/home/src/androidTest/java/com/bina/home/presentation/screen/HomeScreenUiTest.kt)** → teste de Ui com compose 
+#### 2. **Separação de Responsabilidades em Composables** ⭐⭐⭐
+- **Arquivo**: [HomeScreen.kt](feature/home/src/main/java/com/bina/home/presentation/screen/HomeScreen.kt)
+- **Estrutura**:
+  - `HomeRoute()` → DI (Koin)
+  - `HomeScreen()` → Coleta estado do ViewModel
+  - `HomeScreenContent()` → Lógica pura
+  - `LoadingSection()`, `ErrorSection()`, `UsersSection()` → Especializadas
+- **Ganho**: Fácil testar, reutilizar, mockar
 
-### ⚙️ CI/CD & Qualidade (root do repo)
-- **[CI Workflow](.github/workflows/ci.yml)** → Build + lint + testes + **relatório de cobertura Kover **.  
-- **[Template de Pull Request](.github/PULL_REQUEST_TEMPLATE.md)** → Checklist de revisão (build, testes, screenshots, trade-offs).  
-- **Ktlint & Detekt** → Estilo consistente e regras estáticas.
+#### 3. **StateFlow + Coroutines + Catch** ⭐⭐⭐
+- **Arquivo**: [HomeViewModel.kt](feature/home/src/main/java/com/bina/home/presentation/viewmodel/HomeViewModel.kt)
+- **Padrão**: `observeUseCase().map().catch().stateIn()`
+- **Ganho**: Tratamento de erro centralizado, sem callbacks
 
----
+### 🎨 UI/UX Padrões
 
-## Próximos Passos
+#### 4. **Pull-to-Refresh com Acessibilidade** ⭐⭐
+- **Destaque**: `PullRefreshIndicator` com `semantics { contentDescription }`
+- **Dinamismo**: Descrição muda (loading vs idle)
+- **A11y**: TalkBack funciona perfeitamente
 
-### 🔄 Curto Prazo 
-- [ ] Implementar testes E2E com UI Automator
-- [ ] GitHub Actions CI/CD com relatórios de cobertura
-- [ ] Mapeamento avançado de erros HTTP (4xx/5xx)
+#### 5. **Estados Vazios vs Erros (UX Crítica)** ⭐⭐
+- **Diferença**:
+  - **Vazio** = Sucesso sem dados → "Atualizar Agora"
+  - **Erro** = Falha real → "Tentar Novamente"
+- **Ganho**: Usuário entende o que aconteceu
 
-### 📈 Médio Prazo 
-- [ ] Feature flags para rollout gradual
-- [ ] Performance profiling e otimização
-- [ ] Deep linking e navegação avançada
+#### 6. **Shimmer Loading Profissional** ⭐⭐
+- **Componente**: `ShimmerUserListLoading()` (Design System)
+- **Quando**: Durante LoadingSection
+- **Por quê**: Feedback visual mantém engajamento
 
-### 🚀 Longo Prazo
-- [ ] Analytics e crash reporting (Firebase)
-- [ ] Documentação de API com Swagger
-- [ ] Suporte a múltiplas localidades (i18n)
+#### 7. **Retry com Estados de Desabilitar** ⭐⭐
+- **Detalhe**: Botão desabilita durante retry + loading spinner
+- **Ganho**: Evita múltiplos cliques, feedback visual claro
 
----
+### ⚡ Performance & Otimizações
+
+#### 8. **LazyColumn com Key para Recomposição Eficiente** ⭐⭐
+- **Código**: `items(items = users, key = { it.id })`
+- **Por quê**: Cada item tem ID, recompõe só os novos
+- **Impacto**: Performance em listas 1000+ items
+
+#### 9. **Design System com Tokens Centralizados** ⭐⭐
+- **Uso**: `Dimens.spacing16`, `Typography.displayLarge`, `ColorPrimary`
+- **Ganho**: Trocar tema = mudar 1 arquivo
+- **Coerência**: Toda UI segue mesma escala
+
+#### 10. **collectAsState() para Recomposição Fina** ⭐⭐
+- **Código**: Cada `by viewModel.state.collectAsState()`
+- **Ganho**: Recompõe só quando estado muda (não toda frame)
+
+### 🧪 Testabilidade
+
+#### 11. **Composables Puros (100% Testáveis)** ⭐⭐⭐
+- **Função**: `HomeScreenContent()` é pura
+- **Sem**: Koin, ViewModel, Context
+- **Resultado**: Fácil testar com Compose Testing Library
+
+
 
 ## 👤 Autor
 
@@ -235,3 +268,20 @@ Aqui estão os destaques do repositório, com links diretos para as partes mais 
 MIT License
 
 ---
+
+## 🚀 Próximos Passos
+
+### 🔄 Curto Prazo 
+- [ ] Implementar testes E2E com UI Automator
+- [ ] GitHub Actions CI/CD com relatórios de cobertura
+
+### 📈 Médio Prazo
+- [ ] Feature flags para rollout gradual
+- [ ] Performance profiling e otimização
+- [ ] Deep linking e navegação avançada
+
+### 🚀 Longo Prazo
+- [ ] Analytics e crash reporting (Firebase)
+- [ ] Documentação de API com Swagger
+- [ ] Suporte a múltiplas localidades (i18n)
+

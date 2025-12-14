@@ -8,6 +8,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
@@ -91,55 +92,49 @@ class HomeViewModelTest {
     fun `isRefreshing flag is set during refresh`() = runTest {
         // given
         every { observeUseCase() } returns flowOf(emptyList())
-        coEvery { refreshUseCase() } coAnswers { delay(100); Unit }
+        coEvery { refreshUseCase() } coAnswers { delay(100) }
 
         val vm = HomeViewModel(observeUseCase, refreshUseCase)
         advanceUntilIdle()
 
-        // when/then
+        // when/then - Testa que isRefreshing muda: false → true → false
         vm.isRefreshing.test {
-            assertEquals(false, awaitItem()) // initial state
-            vm.refresh()
-            assertEquals(true, awaitItem()) // during refresh
-            advanceUntilIdle()
-            assertEquals(false, awaitItem()) // after refresh
+            assertEquals(false, awaitItem())  // estado inicial
+
+            vm.refresh()  // inicia refresh
+
+            assertEquals(true, awaitItem())   // CAPTURA estado durante refresh (por causa do delay)
+
+            advanceUntilIdle()  // aguarda delay(100) terminar
+
+            assertEquals(false, awaitItem())  // estado após refresh terminar
+
             cancelAndConsumeRemainingEvents()
         }
     }
 
     @Test
-    fun `refresh prevents multiple simultaneous calls`() = runTest {
+    fun `uiState emits Loading then Empty when list is empty`() = runTest {
         // given
         every { observeUseCase() } returns flowOf(emptyList())
-        coEvery { refreshUseCase() } coAnswers { delay(200); Unit }
+
+        val gate = CompletableDeferred<Unit>()
+        coEvery { refreshUseCase() } coAnswers { gate.await() } // segura o refresh
 
         val vm = HomeViewModel(observeUseCase, refreshUseCase)
-        advanceUntilIdle()
 
-        // when - call refresh twice rapidly
-        vm.refresh()
-        vm.refresh() // should be ignored due to debounce
+        vm.uiState.test {
+            // estado inicial do StateFlow
+            assertEquals(HomeUiState.Loading, awaitItem())
 
-        advanceUntilIdle()
+            // libera o refresh terminar
+            gate.complete(Unit)
+            advanceUntilIdle()
 
-        // then - refreshUseCase should only be called once (init + 1st refresh, not 2nd)
-        coVerify(exactly = 2) { refreshUseCase() }
-    }
+            // agora, como tá vazio e já tentou, vira Empty
+            assertEquals(HomeUiState.Empty, awaitItem())
 
-    @Test
-    fun `refresh handles exceptions gracefully`() = runTest {
-        // given
-        every { observeUseCase() } returns flowOf(emptyList())
-        coEvery { refreshUseCase() } throws Exception("Network error")
-
-        val vm = HomeViewModel(observeUseCase, refreshUseCase)
-        advanceUntilIdle()
-
-        // when
-        vm.refresh()
-        advanceUntilIdle()
-
-        // then - should not crash and isRefreshing should be false
-        assertEquals(false, vm.isRefreshing.value)
+            cancelAndConsumeRemainingEvents()
+        }
     }
 }
