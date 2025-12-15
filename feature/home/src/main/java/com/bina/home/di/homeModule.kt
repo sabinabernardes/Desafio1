@@ -18,9 +18,15 @@ import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
 val homeModule = module {
+
     single { RetrofitService.service }
+
     single {
-        Room.databaseBuilder(androidContext(), AppDatabase::class.java, "app_db")
+        Room.databaseBuilder(
+            androidContext(),
+            AppDatabase::class.java,
+            "app_db"
+        )
             .build()
     }
     single { get<AppDatabase>().userDao() }
@@ -28,9 +34,15 @@ val homeModule = module {
     single { ErrorMapper() }
 
     single<UsersRemoteDataSource> { UsersRemoteDataSourceImpl(get()) }
-    single<UsersLocalDataSource>  { UsersLocalDataSourceImpl(get()) }
+    single<UsersLocalDataSource> { UsersLocalDataSourceImpl(get()) }
 
-    single<UsersRepository> { UsersRepositoryImpl(get(), get(), get()) }
+    single<UsersRepository> {
+        UsersRepositoryImpl(
+            get(),
+            get(),
+            get()
+        )
+    }
 
     factory { ObserveUsersUseCase(get()) }
     factory { RefreshUsersUseCase(get()) }
