@@ -97,17 +97,17 @@ class HomeViewModelTest {
         val vm = HomeViewModel(observeUseCase, refreshUseCase)
         advanceUntilIdle()
 
-        // when/then - Testa que isRefreshing muda: false → true → false
+        // when/then -
         vm.isRefreshing.test {
-            assertEquals(false, awaitItem())  // estado inicial
+            assertEquals(false, awaitItem())
 
-            vm.refresh()  // inicia refresh
+            vm.refresh()
 
-            assertEquals(true, awaitItem())   // CAPTURA estado durante refresh (por causa do delay)
+            assertEquals(true, awaitItem())
 
-            advanceUntilIdle()  // aguarda delay(100) terminar
+            advanceUntilIdle()
 
-            assertEquals(false, awaitItem())  // estado após refresh terminar
+            assertEquals(false, awaitItem())
 
             cancelAndConsumeRemainingEvents()
         }
@@ -119,19 +119,16 @@ class HomeViewModelTest {
         every { observeUseCase() } returns flowOf(emptyList())
 
         val gate = CompletableDeferred<Unit>()
-        coEvery { refreshUseCase() } coAnswers { gate.await() } // segura o refresh
+        coEvery { refreshUseCase() } coAnswers { gate.await() }
 
         val vm = HomeViewModel(observeUseCase, refreshUseCase)
 
         vm.uiState.test {
-            // estado inicial do StateFlow
             assertEquals(HomeUiState.Loading, awaitItem())
 
-            // libera o refresh terminar
             gate.complete(Unit)
             advanceUntilIdle()
 
-            // agora, como tá vazio e já tentou, vira Empty
             assertEquals(HomeUiState.Empty, awaitItem())
 
             cancelAndConsumeRemainingEvents()
