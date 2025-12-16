@@ -3,6 +3,7 @@ package com.bina.home.domain.usecase
 import app.cash.turbine.test
 import com.bina.home.domain.model.User
 import com.bina.home.domain.repository.UsersRepository
+import com.bina.home.helper.TestUserBuilder
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -15,28 +16,28 @@ import kotlin.test.assertEquals
 @OptIn(ExperimentalCoroutinesApi::class)
 class ObserveUsersUseCaseTest {
 
-    private val repo = mockk<UsersRepository>()
+    private val usersRepository = mockk<UsersRepository>()
     private lateinit var useCase: ObserveUsersUseCase
 
     @Before
-    fun setup() { useCase = ObserveUsersUseCase(repo) }
+    fun setup() { useCase = ObserveUsersUseCase(usersRepository) }
 
     @Test
     fun `invoke should return repository flow`() = runTest {
-        val users = listOf(User(img = null, name = "n", id = "1", username = "u"))
-        val repoFlow = flow { emit(users) }
-        every { repo.observeUsers() } returns repoFlow
+        val singleUserList = listOf(TestUserBuilder.JOHN_DOE)
+        val repositoryFlow = flow { emit(singleUserList) }
+        every { usersRepository.observeUsers() } returns repositoryFlow
 
         useCase().test {
-            assertEquals(users, awaitItem())
+            assertEquals(singleUserList, awaitItem())
             cancelAndConsumeRemainingEvents()
         }
     }
 
     @Test
     fun `invoke should return empty list when repository is empty`() = runTest {
-        val repoFlow = flow { emit(emptyList<User>()) }
-        every { repo.observeUsers() } returns repoFlow
+        val repositoryFlow = flow { emit(emptyList<User>()) }
+        every { usersRepository.observeUsers() } returns repositoryFlow
 
         useCase().test {
             assertEquals(emptyList(), awaitItem())
@@ -47,8 +48,8 @@ class ObserveUsersUseCaseTest {
     @Test
     fun `invoke should propagate error from repository`() = runTest {
         val testException = Exception("Database error")
-        val repoFlow = flow<List<User>> { throw testException }
-        every { repo.observeUsers() } returns repoFlow
+        val repositoryFlow = flow<List<User>> { throw testException }
+        every { usersRepository.observeUsers() } returns repositoryFlow
 
         useCase().test {
             val error = awaitError()
@@ -58,21 +59,21 @@ class ObserveUsersUseCaseTest {
 
     @Test
     fun `invoke should emit multiple updates from repository`() = runTest {
-        val firstUsers = listOf(User(img = null, name = "User1", id = "1", username = "u1"))
-        val secondUsers = listOf(
-            User(img = null, name = "User1", id = "1", username = "u1"),
-            User(img = null, name = "User2", id = "2", username = "u2")
+        val firstEmissionUserSet = TestUserBuilder.createUserList(TestUserBuilder.ALICE_JOHNSON)
+        val secondEmissionUserSet = TestUserBuilder.createUserList(
+            TestUserBuilder.ALICE_JOHNSON,
+            TestUserBuilder.BOB_SMITH
         )
 
-        val repoFlow = flow {
-            emit(firstUsers)
-            emit(secondUsers)
+        val repositoryFlow = flow {
+            emit(firstEmissionUserSet)
+            emit(secondEmissionUserSet)
         }
-        every { repo.observeUsers() } returns repoFlow
+        every { usersRepository.observeUsers() } returns repositoryFlow
 
         useCase().test {
-            assertEquals(firstUsers, awaitItem())
-            assertEquals(secondUsers, awaitItem())
+            assertEquals(firstEmissionUserSet, awaitItem())
+            assertEquals(secondEmissionUserSet, awaitItem())
             cancelAndConsumeRemainingEvents()
         }
     }
