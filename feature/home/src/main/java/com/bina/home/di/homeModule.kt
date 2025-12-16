@@ -1,11 +1,11 @@
 package com.bina.home.di
 
 import androidx.room.Room
-import com.bina.home.data.database.AppDatabase
-import com.bina.home.data.localdatasource.UsersLocalDataSource
-import com.bina.home.data.localdatasource.UsersLocalDataSourceImpl
-import com.bina.home.data.remotedatasource.UsersRemoteDataSource
-import com.bina.home.data.remotedatasource.UsersRemoteDataSourceImpl
+import com.bina.home.data.local.database.AppDatabase
+import com.bina.home.data.local.datasource.UsersLocalDataSource
+import com.bina.home.data.local.datasource.UsersLocalDataSourceImpl
+import com.bina.home.data.remote.datasource.UsersRemoteDataSource
+import com.bina.home.data.remote.datasource.UsersRemoteDataSourceImpl
 import com.bina.home.data.repository.ErrorMapper
 import com.bina.home.data.repository.UsersRepositoryImpl
 import com.bina.home.domain.repository.UsersRepository

@@ -1,6 +1,6 @@
-package com.bina.home.data.localdatasource
+package com.bina.home.data.local.datasource
 
-import com.bina.home.data.database.UserDao
+import com.bina.home.data.local.database.UserDao
 import com.bina.home.data.mapper.toDto
 import com.bina.home.data.mapper.toEntity
 import com.bina.home.data.model.UserDto

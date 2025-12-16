@@ -1,4 +1,4 @@
-package com.bina.home.data.service
+package com.bina.home.data.remote.service
 
 import com.bina.home.data.model.UserDto
 import retrofit2.http.GET

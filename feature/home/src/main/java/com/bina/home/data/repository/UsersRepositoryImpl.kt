@@ -1,8 +1,9 @@
 package com.bina.home.data.repository
 
-import com.bina.home.data.localdatasource.UsersLocalDataSource
+import com.bina.home.data.remote.exception.NetworkException
+import com.bina.home.data.local.datasource.UsersLocalDataSource
 import com.bina.home.data.mapper.toDomain
-import com.bina.home.data.remotedatasource.UsersRemoteDataSource
+import com.bina.home.data.remote.datasource.UsersRemoteDataSource
 import com.bina.home.domain.model.User
 import com.bina.home.domain.repository.UsersRepository
 import com.bina.home.utils.UserError
@@ -35,9 +36,11 @@ internal class UsersRepositoryImpl(
 
             val userError = errorMapper.mapErrorToUserError(e)
 
-            if (userError == UserError.Network) return
-
-            throw Exception(userError.getMessage(), e)
+            throw if (userError == UserError.Network) {
+                NetworkException(userError.getMessage(), e)
+            } else {
+                Exception(userError.getMessage(), e)
+            }
         }
     }
 }

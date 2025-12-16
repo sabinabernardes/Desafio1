@@ -1,8 +1,8 @@
 package com.bina.home.data.remotedatasource
 
-import com.bina.home.data.remotedatasource.UsersRemoteDataSourceImpl
 import com.bina.home.data.model.UserDto
-import com.bina.home.data.service.PicPayService
+import com.bina.home.data.remote.service.PicPayService
+import com.bina.home.data.remote.datasource.UsersRemoteDataSourceImpl
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -23,16 +23,6 @@ class UsersRemoteDataSourceImplTest {
     private val dataSource = UsersRemoteDataSourceImpl(service)
     private val testDispatcher = StandardTestDispatcher()
     private val testScope = TestScope(testDispatcher)
-
-    @Before
-    fun setupDispatcher() {
-        Dispatchers.setMain(testDispatcher)
-    }
-
-    @After
-    fun cleanupDispatcher() {
-        Dispatchers.setMain(Dispatchers.Default)
-    }
 
     @Test
     fun `given service returns users when getUsers called then emit users`(): Unit = testScope.runTest {

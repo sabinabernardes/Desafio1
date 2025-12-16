@@ -1,6 +1,6 @@
 package com.bina.home.data.mapper
 
-import com.bina.home.data.database.UserEntity
+import com.bina.home.data.local.database.UserEntity
 import com.bina.home.data.model.UserDto
 import com.bina.home.domain.model.User
 

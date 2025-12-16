@@ -1,10 +1,11 @@
 package com.bina.home.data.repository
 
 import app.cash.turbine.test
-import com.bina.home.data.localdatasource.UsersLocalDataSource
+import com.bina.home.data.local.datasource.UsersLocalDataSource
 import com.bina.home.data.mapper.toDomain
 import com.bina.home.data.model.UserDto
-import com.bina.home.data.remotedatasource.UsersRemoteDataSource
+import com.bina.home.data.remote.datasource.UsersRemoteDataSource
+import com.bina.home.data.remote.exception.NetworkException
 import com.bina.home.domain.model.User
 import com.bina.home.utils.UserError
 import io.mockk.coVerify
@@ -74,11 +75,13 @@ class UsersRepositoryImplTest {
     }
 
     @Test
-    fun `refreshUsers should NOT throw when remote fails with Network error and does not insert`() = runTest {
+    fun `refreshUsers throws NetworkException when remote fails with network error and does not insert`() = runTest {
         every { remote.getUsers() } returns flow { throw Exception("Network error") }
         every { errorMapper.mapErrorToUserError(any()) } returns UserError.Network
 
-        repository.refreshUsers()
+        assertFailsWith<NetworkException> {
+            repository.refreshUsers()
+        }
 
         coVerify(exactly = 0) { local.insertUsers(any()) }
     }

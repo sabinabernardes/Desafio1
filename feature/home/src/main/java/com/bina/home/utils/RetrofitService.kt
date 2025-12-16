@@ -1,6 +1,6 @@
 package com.bina.home.utils
 
-import com.bina.home.data.service.PicPayService
+import com.bina.home.data.remote.service.PicPayService
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory

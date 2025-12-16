@@ -1,4 +1,4 @@
-package com.bina.home.data.database
+package com.bina.home.data.local.database
 
 import androidx.room.Dao
 import androidx.room.Insert
