@@ -32,4 +32,48 @@ class ObserveUsersUseCaseTest {
             cancelAndConsumeRemainingEvents()
         }
     }
+
+    @Test
+    fun `invoke should return empty list when repository is empty`() = runTest {
+        val repoFlow = flow { emit(emptyList<User>()) }
+        every { repo.observeUsers() } returns repoFlow
+
+        useCase().test {
+            assertEquals(emptyList(), awaitItem())
+            cancelAndConsumeRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `invoke should propagate error from repository`() = runTest {
+        val testException = Exception("Database error")
+        val repoFlow = flow<List<User>> { throw testException }
+        every { repo.observeUsers() } returns repoFlow
+
+        useCase().test {
+            val error = awaitError()
+            assertEquals("Database error", error.message)
+        }
+    }
+
+    @Test
+    fun `invoke should emit multiple updates from repository`() = runTest {
+        val firstUsers = listOf(User(img = null, name = "User1", id = "1", username = "u1"))
+        val secondUsers = listOf(
+            User(img = null, name = "User1", id = "1", username = "u1"),
+            User(img = null, name = "User2", id = "2", username = "u2")
+        )
+
+        val repoFlow = flow {
+            emit(firstUsers)
+            emit(secondUsers)
+        }
+        every { repo.observeUsers() } returns repoFlow
+
+        useCase().test {
+            assertEquals(firstUsers, awaitItem())
+            assertEquals(secondUsers, awaitItem())
+            cancelAndConsumeRemainingEvents()
+        }
+    }
 }

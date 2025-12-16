@@ -1,23 +1,27 @@
 package com.bina.home.presentation.viewmodel
 
+import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
-import com.bina.home.rule.MainDispatcherRule
+import com.bina.home.data.remote.exception.NetworkException
+import com.bina.home.domain.model.User
 import com.bina.home.domain.usecase.ObserveUsersUseCase
 import com.bina.home.domain.usecase.RefreshUsersUseCase
+import com.bina.home.rule.MainDispatcherRule
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
+import kotlinx.coroutines.withTimeout
 import org.junit.Rule
 import org.junit.Test
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -26,112 +30,131 @@ class HomeViewModelTest {
     @get:Rule
     val mainRule = MainDispatcherRule()
 
-    private val observeUseCase: ObserveUsersUseCase = mockk()
-    private val refreshUseCase: RefreshUsersUseCase = mockk(relaxed = true)
-
-    @Test
-    fun `uiState emits Error when observe throws`() = runTest {
-        every { observeUseCase() } returns flow { throw RuntimeException("boom") }
-        coEvery { refreshUseCase() } returns Unit
-
-        val vm = HomeViewModel(observeUseCase, refreshUseCase)
-
-        vm.uiState.test {
-            val first = awaitItem()
-
-            when (first) {
-                HomeUiState.Loading -> {
-                    advanceUntilIdle()
-                    val second = awaitItem()
-                    assertTrue(second is HomeUiState.Error)
-                    assertEquals("boom", second.message)
-                }
-                is HomeUiState.Error -> {
-                    assertEquals("boom", first.message)
-                }
-                else -> error("Estado inesperado: $first")
-            }
-
-            cancelAndConsumeRemainingEvents()
-        }
-    }
+    private val observeUsersUseCase: ObserveUsersUseCase = mockk()
+    private val refreshUsersUseCase: RefreshUsersUseCase = mockk()
 
     @Test
     fun `init calls refresh`() = runTest {
-        // given
-        every { observeUseCase() } returns flowOf(emptyList())
-        coEvery { refreshUseCase() } returns Unit
+        every { observeUsersUseCase() } returns flowOf(emptyList())
+        coEvery { refreshUsersUseCase() } returns Unit
 
-        // when
-        HomeViewModel(observeUseCase, refreshUseCase)
+        val viewModel = HomeViewModel(observeUsersUseCase, refreshUsersUseCase)
 
-        advanceUntilIdle()
+        viewModel.uiState.test {
+            runCurrent()
+            advanceUntilIdle()
+            cancelAndConsumeRemainingEvents()
+        }
 
-        // then
-        coVerify(exactly = 1) { refreshUseCase() }
+        coVerify(exactly = 1) { refreshUsersUseCase() }
     }
 
     @Test
     fun `refresh can be called manually`() = runTest {
-        // given
-        every { observeUseCase() } returns flowOf(emptyList())
-        coEvery { refreshUseCase() } returns Unit
-        val vm = HomeViewModel(observeUseCase, refreshUseCase)
+        every { observeUsersUseCase() } returns flowOf(emptyList())
+        coEvery { refreshUsersUseCase() } returns Unit
 
-        advanceUntilIdle()
+        val viewModel = HomeViewModel(observeUsersUseCase, refreshUsersUseCase)
 
-        // when
-        vm.refresh()
-        advanceUntilIdle()
+        viewModel.uiState.test {
+            runCurrent()
+            advanceUntilIdle()
 
-        // then
-        coVerify(exactly = 2) { refreshUseCase() }
+            viewModel.refresh()
+            advanceUntilIdle()
+
+            cancelAndConsumeRemainingEvents()
+        }
+
+        coVerify(exactly = 2) { refreshUsersUseCase() }
     }
 
     @Test
-    fun `isRefreshing flag is set during refresh`() = runTest {
-        // given
-        every { observeUseCase() } returns flowOf(emptyList())
-        coEvery { refreshUseCase() } coAnswers { delay(100) }
+    fun `empty database and successful refresh shows Empty`() = runTest {
+        val databaseFlow = MutableStateFlow<List<User>>(emptyList())
+        every { observeUsersUseCase() } returns databaseFlow
+        coEvery { refreshUsersUseCase() } returns Unit
 
-        val vm = HomeViewModel(observeUseCase, refreshUseCase)
-        advanceUntilIdle()
+        val viewModel = HomeViewModel(observeUsersUseCase, refreshUsersUseCase)
 
-        // when/then -
-        vm.isRefreshing.test {
-            assertEquals(false, awaitItem())
+        viewModel.uiState.test {
+            runCurrent()
 
-            vm.refresh()
-
-            assertEquals(true, awaitItem())
-
-            advanceUntilIdle()
-
-            assertEquals(false, awaitItem())
+            val emptyState = awaitState { state ->
+                state.content is HomeUiState.Content.Empty
+            }
+            assertTrue(emptyState.content is HomeUiState.Content.Empty)
 
             cancelAndConsumeRemainingEvents()
         }
     }
 
     @Test
-    fun `uiState emits Loading then Empty when list is empty`() = runTest {
-        // given
-        every { observeUseCase() } returns flowOf(emptyList())
+    fun `airplane mode and empty database shows network Error`() = runTest {
+        val databaseFlow = MutableStateFlow<List<User>>(emptyList())
+        every { observeUsersUseCase() } returns databaseFlow
+        coEvery { refreshUsersUseCase() } throws NetworkException("No internet connection", null)
 
-        val gate = CompletableDeferred<Unit>()
-        coEvery { refreshUseCase() } coAnswers { gate.await() }
+        val viewModel = HomeViewModel(observeUsersUseCase, refreshUsersUseCase)
 
-        val vm = HomeViewModel(observeUseCase, refreshUseCase)
+        viewModel.uiState.test {
+            runCurrent()
 
-        vm.uiState.test {
-            assertEquals(HomeUiState.Loading, awaitItem())
-
-            gate.complete(Unit)
-            advanceUntilIdle()
-
-            assertEquals(HomeUiState.Empty, awaitItem())
+            val errorState = awaitState { state ->
+                state.content is HomeUiState.Content.Error
+            }
+            val errorContent = errorState.content as HomeUiState.Content.Error
+            assertTrue(errorContent.message.isNotBlank())
 
             cancelAndConsumeRemainingEvents()
         }
+    }
+
+    @Test
+    fun `isRefreshing is true during refresh and false after completion`() = runTest {
+        every { observeUsersUseCase() } returns flowOf(emptyList())
+
+        val refreshGate = CompletableDeferred<Unit>()
+        var refreshCallCount = 0
+
+        coEvery { refreshUsersUseCase() } coAnswers {
+            refreshCallCount++
+            if (refreshCallCount == 1) Unit else refreshGate.await()
+        }
+
+        val viewModel = HomeViewModel(observeUsersUseCase, refreshUsersUseCase)
+
+        viewModel.uiState.test {
+            runCurrent()
+            advanceUntilIdle()
+
+            viewModel.refresh()
+            runCurrent()
+
+            val refreshingEnabledState = awaitState { state -> state.isRefreshing }
+            assertTrue(refreshingEnabledState.isRefreshing)
+
+            refreshGate.complete(Unit)
+            advanceUntilIdle()
+
+            val refreshingDisabledState = awaitState { state -> !state.isRefreshing }
+            assertFalse(refreshingDisabledState.isRefreshing)
+
+            cancelAndConsumeRemainingEvents()
+        }
+    }
+
+    private suspend fun ReceiveTurbine<HomeUiState>.awaitState(
+        timeoutMillis: Long = 3_000,
+        predicate: (HomeUiState) -> Boolean
+    ): HomeUiState = withTimeout(timeoutMillis) {
+        var latestState: HomeUiState
+
+        while (true) {
+            latestState = awaitItem()
+            if (predicate(latestState)) break
+        }
+
+        latestState
     }
 }
