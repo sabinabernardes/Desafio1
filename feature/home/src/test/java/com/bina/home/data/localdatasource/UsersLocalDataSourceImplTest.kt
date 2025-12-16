@@ -1,6 +1,7 @@
 package com.bina.home.data.localdatasource
 
-import com.bina.home.data.database.UserDao
+import com.bina.home.data.local.database.UserDao
+import com.bina.home.data.local.datasource.UsersLocalDataSourceImpl
 import com.bina.home.data.mapper.toEntity
 import com.bina.home.data.model.UserDto
 import io.mockk.coVerify

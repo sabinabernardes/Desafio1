@@ -1,8 +1,8 @@
 package com.bina.home.data.remotedatasource
 
-import com.bina.home.data.remotedatasource.UsersRemoteDataSourceImpl
 import com.bina.home.data.model.UserDto
-import com.bina.home.data.service.PicPayService
+import com.bina.home.data.remote.service.PicPayService
+import com.bina.home.data.remote.datasource.UsersRemoteDataSourceImpl
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi

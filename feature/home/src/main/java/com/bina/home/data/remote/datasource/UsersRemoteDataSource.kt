@@ -1,4 +1,4 @@
-package com.bina.home.data.remotedatasource
+package com.bina.home.data.remote.datasource
 
 import com.bina.home.data.model.UserDto
 import kotlinx.coroutines.flow.Flow

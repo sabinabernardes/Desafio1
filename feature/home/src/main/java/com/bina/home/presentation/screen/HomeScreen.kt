@@ -21,7 +21,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,6 +29,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.rememberAsyncImagePainter
 import com.bina.core.designsystem.colors.ColorBackground
 import com.bina.core.designsystem.colors.ColorPrimary
@@ -44,6 +44,7 @@ import com.bina.home.presentation.viewmodel.HomeUiState
 import com.bina.home.presentation.viewmodel.HomeViewModel
 import org.koin.androidx.compose.koinViewModel
 
+
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun HomeRoute() {
@@ -55,26 +56,26 @@ fun HomeRoute() {
 private fun HomeScreen(
     viewModel: HomeViewModel = koinViewModel(),
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    val isRefreshing by viewModel.isRefreshing.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     HomeScreenContent(
-        uiState = uiState,
-        isRefreshing = isRefreshing,
-        onRetry = { viewModel.refresh() }
+        state = state,
+        onRefresh = viewModel::refresh
     )
 }
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun HomeScreenContent(
-    uiState: HomeUiState,
-    isRefreshing: Boolean = false,
-    onRetry: () -> Unit,
+    state: HomeUiState,
+    onRefresh: () -> Unit,
 ) {
-    val pullRefreshState = rememberPullRefreshState(isRefreshing, { onRetry() })
+    val pullRefreshState = rememberPullRefreshState(
+        refreshing = state.isRefreshing,
+        onRefresh = onRefresh
+    )
 
-    val pullRefreshDescription = if (isRefreshing) {
+    val pullRefreshDescription = if (state.isRefreshing) {
         stringResource(id = R.string.home_pull_refresh_loading)
     } else {
         stringResource(id = R.string.home_pull_refresh_idle)
@@ -87,34 +88,31 @@ fun HomeScreenContent(
             .pullRefresh(pullRefreshState)
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            when (uiState) {
-                is HomeUiState.Loading -> LoadingSection()
+            when (val content = state.content) {
+                is HomeUiState.Content.Loading -> LoadingSection()
 
-                is HomeUiState.Empty -> EmptySection(onRefresh = onRetry)
+                is HomeUiState.Content.Empty -> EmptySection(onRefresh = onRefresh)
 
-                is HomeUiState.Success -> UsersSection(users = uiState.users)
+                is HomeUiState.Content.Success -> UsersSection(users = content.users)
 
-                is HomeUiState.Error -> ErrorSection(
-                    message = uiState.message,
-                    onRetry = onRetry,
-                    isRefreshing = isRefreshing
+                is HomeUiState.Content.Error -> ErrorSection(
+                    message = content.message,
+                    onRetry = onRefresh,
+                    isRefreshing = state.isRefreshing
                 )
             }
         }
 
         PullRefreshIndicator(
-            refreshing = isRefreshing,
+            refreshing = state.isRefreshing,
             state = pullRefreshState,
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .semantics {
-                    contentDescription = pullRefreshDescription
-                },
+                .semantics { contentDescription = pullRefreshDescription },
             backgroundColor = ColorPrimary,
             contentColor = ColorBackground
         )
@@ -155,7 +153,7 @@ private fun LoadingSection() {
 private fun ErrorSection(
     message: String,
     onRetry: () -> Unit,
-    isRefreshing: Boolean = false
+    isRefreshing: Boolean
 ) {
     Column(
         modifier = Modifier
@@ -186,9 +184,7 @@ private fun ErrorSection(
 }
 
 @Composable
-private fun UsersSection(
-    users: List<UserUi>
-) {
+private fun UsersSection(users: List<UserUi>) {
     Text(
         text = stringResource(id = R.string.home_title_contacts),
         style = Typography.displayLarge,
@@ -223,7 +219,7 @@ private fun UsersSection(
 }
 
 @Composable
-private fun EmptySection(onRefresh: () -> Unit = {}) {
+private fun EmptySection(onRefresh: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -261,10 +257,13 @@ fun HomeScreenPreview() {
                 username = "Pois é, pois é, pois é"
             )
         ).map { it.toUi() }
+
         HomeScreenContent(
-            uiState = HomeUiState.Success(users),
-            isRefreshing = false,
-            onRetry = {}
+            state = HomeUiState(
+                content = HomeUiState.Content.Success(users),
+                isRefreshing = false
+            ),
+            onRefresh = {}
         )
     }
 }
@@ -274,9 +273,8 @@ fun HomeScreenPreview() {
 fun HomeScreenLoadingPreview() {
     PicPayTheme {
         HomeScreenContent(
-            uiState = HomeUiState.Loading,
-            isRefreshing = false,
-            onRetry = {}
+            state = HomeUiState(content = HomeUiState.Content.Loading),
+            onRefresh = {}
         )
     }
 }
@@ -286,45 +284,19 @@ fun HomeScreenLoadingPreview() {
 fun HomeScreenEmptyPreview() {
     PicPayTheme {
         HomeScreenContent(
-            uiState = HomeUiState.Empty,
-            isRefreshing = false,
-            onRetry = {}
+            state = HomeUiState(content = HomeUiState.Content.Empty),
+            onRefresh = {}
         )
     }
 }
-
 
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenErrorPreview() {
     PicPayTheme {
         HomeScreenContent(
-            uiState = HomeUiState.Error("Erro de rede. Tente novamente."),
-            isRefreshing = false,
-            onRetry = {}
+            state = HomeUiState(content = HomeUiState.Content.Error("Erro de rede. Tente novamente.")),
+            onRefresh = {}
         )
     }
 }
-
-@Preview(showBackground = true)
-@Composable
-fun HomeScreenShimmerLoadingPreview() {
-    PicPayTheme {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(ColorPrimary)
-                .padding(Dimens.spacing16)
-        ) {
-            Text(
-                text = stringResource(id = R.string.home_title_contacts),
-                style = Typography.displayLarge,
-                modifier = Modifier
-                    .padding(bottom = Dimens.spacing16)
-                    .fillMaxWidth()
-            )
-            ShimmerUserListLoading(itemCount = 4)
-        }
-    }
-}
-
