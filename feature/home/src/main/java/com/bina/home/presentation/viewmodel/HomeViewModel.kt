@@ -21,8 +21,8 @@ internal class HomeViewModel(
     private val refreshUsersUseCase: RefreshUsersUseCase
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(HomeUiState())
-    val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+    private val homeUiStateFlow = MutableStateFlow(HomeUiState())
+    val uiState: StateFlow<HomeUiState> = homeUiStateFlow.asStateFlow()
 
     private var latestUsers: List<UserUi> = emptyList()
     private var refreshJob: Job? = null
@@ -35,14 +35,14 @@ internal class HomeViewModel(
     private fun observeUsers() {
         viewModelScope.launch {
             observeUsersUseCase()
-                .map { it.map { u -> u.toUi() } }
+                .map { userList -> userList.map { user -> user.toUi() } }
                 .distinctUntilChanged()
-                .collect { list ->
-                    latestUsers = list
-                    if (_uiState.value.content !is HomeUiState.Content.Error) {
-                        _uiState.value = _uiState.value.copy(
-                            content = if (list.isEmpty()) HomeUiState.Content.Empty
-                            else HomeUiState.Content.Success(list)
+                .collect { userUiList ->
+                    latestUsers = userUiList
+                    if (homeUiStateFlow.value.content !is HomeUiState.Content.Error) {
+                        homeUiStateFlow.value = homeUiStateFlow.value.copy(
+                            content = if (userUiList.isEmpty()) HomeUiState.Content.Empty
+                            else HomeUiState.Content.Success(userUiList)
                         )
                     }
                 }
@@ -52,7 +52,7 @@ internal class HomeViewModel(
     fun refresh() {
         refreshJob?.cancel()
         refreshJob = viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isRefreshing = true)
+            homeUiStateFlow.value = homeUiStateFlow.value.copy(isRefreshing = true)
             try {
                 refreshUsersUseCase()
             } catch (e: CancellationException) {
@@ -62,11 +62,11 @@ internal class HomeViewModel(
                     is NetworkException -> e.message ?: "Sem internet. Conecte-se e tente novamente."
                     else -> e.message ?: "Erro desconhecido"
                 }
-                _uiState.value = _uiState.value.copy(
+                homeUiStateFlow.value = homeUiStateFlow.value.copy(
                     content = HomeUiState.Content.Error(message)
                 )
             } finally {
-                _uiState.value = _uiState.value.copy(isRefreshing = false)
+                homeUiStateFlow.value = homeUiStateFlow.value.copy(isRefreshing = false)
             }
         }
     }
