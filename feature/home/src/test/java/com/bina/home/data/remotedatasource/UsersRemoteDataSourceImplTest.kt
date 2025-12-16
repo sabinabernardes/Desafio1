@@ -24,16 +24,6 @@ class UsersRemoteDataSourceImplTest {
     private val testDispatcher = StandardTestDispatcher()
     private val testScope = TestScope(testDispatcher)
 
-    @Before
-    fun setupDispatcher() {
-        Dispatchers.setMain(testDispatcher)
-    }
-
-    @After
-    fun cleanupDispatcher() {
-        Dispatchers.setMain(Dispatchers.Default)
-    }
-
     @Test
     fun `given service returns users when getUsers called then emit users`(): Unit = testScope.runTest {
         // given
